@@ -1,17 +1,12 @@
 import globals as g
 import object_detection
-import stuff_segmentation
 import supervisely_lib as sly
 
 
 @g.my_app.callback("export_coco")
 @sly.timeit
 def export_coco(api: sly.Api, task_id, context, state, app_logger):
-    if g.isObjectDetection:
-        object_detection.start_object_detection()
-    elif g.isStuffSegmentation:
-        stuff_segmentation.start_stuff_segmentation()
-
+    object_detection.start_object_detection()
     g.my_app.stop()
 
 

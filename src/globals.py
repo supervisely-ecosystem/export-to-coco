@@ -19,15 +19,14 @@ meta = sly.ProjectMeta.from_json(meta_json)
 
 storage_dir = os.path.join(my_app.data_dir, "storage_dir")
 coco_base_dir = os.path.join(storage_dir, project.name)
-#sly_base_dir = os.path.join(storage_dir, "sly_base_dir")
 
 mkdir(storage_dir, True)
 mkdir(coco_base_dir)
-#mkdir(sly_base_dir)
 
-
-isObjectDetection = True
-isStuffSegmentation = False
+# sly_base_dir = os.path.join(storage_dir, "sly_base_dir")
+# mkdir(sly_base_dir)
+# isObjectDetection = True
+# isStuffSegmentation = False
 # isKeypointDetection = False
 # isPanopticSegmentation = False
 # isImageCaptioning = False

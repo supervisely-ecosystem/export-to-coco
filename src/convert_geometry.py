@@ -1,4 +1,3 @@
-import globals as g
 import supervisely_lib as sly
 from supervisely_lib.annotation.json_geometries_map import GET_GEOMETRY_FROM_STR
 
