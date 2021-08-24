@@ -6,11 +6,9 @@
   ],
   "description": "Converts Supervisely to COCO format and prepares tar archive for download",
   "docker_image": "supervisely/base-py-sdk:6.1.95",
-  "main_script": "src/export_as_masks.py",
-  "modal_template": "src/modal.html",
-  "modal_template_state": {},
+  "main_script": "src/main.py",
   "task_location": "workspace_tasks",
-  "icon": "https://i.imgur.com/Dz0f248.png",
+  "icon": "https://i.imgur.com/M65EkKh.png",
   "icon_background": "#FFFFFF",
   "headless": true,
   "context_menu": {
