@@ -1,5 +1,5 @@
 <div align="center" markdown>
-<img src="https://i.imgur.com/wDdLM8H.png"/>
+<img src="https://imgur.com/hJPOgeu.png"/>
 
 
 # Export to COCO
@@ -25,25 +25,26 @@ App converts [Supervisely format](https://docs.supervise.ly/data-organization/00
 
 Application key points:  
 - Supports only **Object Detection** from **COCO** format
-- Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco) (**WIP**)
+- Polygons without holes are supported
+<!-- - Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco) (**WIP**) -->
 
 
 # How to Use
 1. Add [Export to COCO](https://ecosystem.supervise.ly/apps/export-to-coco) to your team from Ecosystem.
 
-<img data-key="sly-module-link" data-module-slug="supervisely-ecosystem/export-to-coco" src="https://imgur.com/XLOsIRN.png" width="350px" style='padding-bottom: 20px'/>  
+<img data-key="sly-module-link" data-module-slug="supervisely-ecosystem/export-to-coco" src="https://imgur.com/OxqtYTS.png" width="350px" style='padding-bottom: 20px'/>  
 
 2. Run app from the context menu of **Images Project**:
 
-<img src="https://imgur.com/Pda1KsZ.png" width="100%"/>
+<img src="https://imgur.com/0JwLqYJ.png" width="100%"/>
 
 # Results
 
 After running the application, you will be redirected to the `Tasks` page. Once application processing has finished, your link for downloading will be available. Click on the `file name` to download it.
 
-<img src="https://i.imgur.com/4oE9sxi.png"/>
+<img src="https://imgur.com/kK1wmN9.png"/>
 
 You can also find your converted project in   
 `Team Files` -> `Export to COCO` -> `<taskId>_<projectName>.tar`
 
-<img src="https://i.imgur.com/3pDolxh.png"/>
+<img src="https://imgur.com/CovU9Re.png"/>
