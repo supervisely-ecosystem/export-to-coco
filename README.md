@@ -24,7 +24,7 @@
 App converts [Supervisely format](https://docs.supervise.ly/data-organization/00_ann_format_navi) project to [COCO format](https://cocodataset.org/#home) as **downloadable .tar archive**
 
 Application key points:  
-- Supports only COCO `Object Detection`format
+- Supports only **Object Detection** from **COCO** format
 - Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco) (**WIP**)
 
 
