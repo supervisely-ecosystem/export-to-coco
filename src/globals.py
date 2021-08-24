@@ -9,7 +9,7 @@ task_id = os.environ["TASK_ID"]
 user_id = os.environ["context.userId"]
 team_id = int(os.environ['context.teamId'])
 workspace_id = int(os.environ['context.workspaceId'])
-project_id = int(os.environ['context.projectId'])
+project_id = int(os.environ['modal.state.slyProjectId'])
 
 user = api.user.get_info_by_id(user_id)
 project = api.project.get_info_by_id(project_id)
