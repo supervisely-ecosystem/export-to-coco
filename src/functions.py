@@ -24,6 +24,10 @@ def get_categories_from_meta(meta):
     return categories
 
 
+def get_project_contributors():
+    pass
+
+
 def coco_segmentation(segmentation):  # works only with external vertices for now
     segmentation = [coord for sublist in segmentation for coord in sublist]
     return segmentation
@@ -47,30 +51,29 @@ def create_coco_dataset(coco_dataset_dir):
     return img_dir, ann_dir
 
 
-def create_coco_annotation(meta, categories_mapping, dataset, user_name, image_infos, anns, label_id, progress):
-    coco_ann = dict(
-        info=dict(
-            description=dataset.description,
-            url="None",
-            version=str(1.0),
-            year=int(dataset.created_at[:4]),
-            contributor=user_name,
-            date_created=dataset.created_at,
-        ),
-        licenses=[dict(url="None", id=0, name="None")],
-        images=[
-            # license, url, file_name, height, width, date_captured, id
-        ],
-        #type="instances",
-        annotations=[
-            # segmentation, area, iscrowd, image_id, bbox, category_id, id
-        ],
-        categories=get_categories_from_meta(meta)  # supercategory, id, name
-    )
-    sdfsc = []
-    for image_info, ann in zip(image_infos, anns):
+def create_coco_annotation(meta, categories_mapping, dataset, user_name, image_infos, anns, label_id, coco_ann, progress):
+    if len(coco_ann) == 0:
+        coco_ann = dict(
+            info=dict(
+                description=dataset.description,
+                url="None",
+                version=str(1.0),
+                year=int(dataset.created_at[:4]),
+                contributor=user_name,
+                date_created=dataset.created_at,
+            ),
+            licenses=[dict(url="None", id=0, name="None")],
+            images=[
+                # license, url, file_name, height, width, date_captured, id
+            ],
+            #type="instances",
+            annotations=[
+                # segmentation, area, iscrowd, image_id, bbox, category_id, id
+            ],
+            categories=get_categories_from_meta(meta)  # supercategory, id, name
+        )
 
-        sdfsc.append(image_info.id)
+    for image_info, ann in zip(image_infos, anns):
         coco_ann["images"].append(dict(
             license="None",
             file_name=image_info.name,
@@ -98,7 +101,7 @@ def create_coco_annotation(meta, categories_mapping, dataset, user_name, image_i
                 category_id=categories_mapping[label.obj_class.name],   # The category id corresponds to a single category specified in the categories section
                 id=label_id,                                            # Each annotation also has an id (unique to all other annotations in the dataset)
             ))
-    progress.iters_done_report(len(image_infos))
+        progress.iter_done_report()
     return coco_ann
 
 
