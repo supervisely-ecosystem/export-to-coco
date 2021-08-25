@@ -19,7 +19,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
         coco_ann = {}
         label_id = 0
         images = api.image.get_list(dataset.id)
-        ds_progress = sly.Progress('Converting dataset: {}'.format(dataset.name), total_cnt=len(images))
+        ds_progress = sly.Progress('Converting dataset: {}'.format(dataset.name), total_cnt=len(images), min_report_percent=5)
         for batch in sly.batched(images):
             image_ids = [image_info.id for image_info in batch]
             image_paths = [os.path.join(coco_dataset_dir, img_dir, image_info.name) for image_info in batch]
@@ -28,7 +28,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
             anns = [sly.Annotation.from_json(x.annotation, g.meta) for x in ann_infos]
             anns = [convert_geometry.convert_annotation(ann, meta) for ann in anns]
-            coco_ann = f.create_coco_annotation(meta, categories_mapping, dataset, g.user_name, batch, anns, label_id, ds_progress)
+            coco_ann = f.create_coco_annotation(meta, categories_mapping, dataset, g.user_name, batch, anns, label_id, coco_ann, ds_progress)
         with open(os.path.join(ann_dir, f"instances.json"), 'w') as file:
             json.dump(coco_ann, file)
 
