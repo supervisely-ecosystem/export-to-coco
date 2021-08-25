@@ -29,12 +29,12 @@ def get_project_contributors():
 
 
 def coco_segmentation(segmentation):  # works only with external vertices for now
-    segmentation = [coord for sublist in segmentation for coord in sublist]
+    segmentation = [float(coord) for sublist in segmentation for coord in sublist]
     return segmentation
 
 
 def coco_bbox(bbox):
-    bbox = [coord for sublist in bbox for coord in sublist]
+    bbox = [float(coord) for sublist in bbox for coord in sublist]
     x, y, max_x, max_y = bbox
     width = max_x - x
     height = max_y - y
