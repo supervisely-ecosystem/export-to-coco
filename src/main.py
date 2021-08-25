@@ -28,7 +28,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
             anns = [sly.Annotation.from_json(x.annotation, g.meta) for x in ann_infos]
             anns = [convert_geometry.convert_annotation(ann, meta) for ann in anns]
-            coco_ann = f.create_coco_annotation(meta, categories_mapping, dataset, g.user.name, batch, anns, label_id, ds_progress)
+            coco_ann = f.create_coco_annotation(meta, categories_mapping, dataset, g.user_name, batch, anns, label_id, ds_progress)
         with open(os.path.join(ann_dir, f"instances.json"), 'w') as file:
             json.dump(coco_ann, file)
 
