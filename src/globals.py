@@ -12,7 +12,7 @@ workspace_id = int(os.environ['context.workspaceId'])
 project_id = int(os.environ['modal.state.slyProjectId'])
 
 # user = api.user.get_info_by_id(user_id)
-user = "Supervisely"
+user_name = "Supervisely"
 project = api.project.get_info_by_id(project_id)
 meta_json = api.project.get_meta(project_id)
 meta = sly.ProjectMeta.from_json(meta_json)
