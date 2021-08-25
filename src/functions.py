@@ -101,7 +101,7 @@ def create_coco_annotation(meta, categories_mapping, dataset, user_name, image_i
                 category_id=categories_mapping[label.obj_class.name],   # The category id corresponds to a single category specified in the categories section
                 id=label_id,                                            # Each annotation also has an id (unique to all other annotations in the dataset)
             ))
-        progress.iter_done_report(1)
+        progress.iter_done_report()
     return coco_ann
 
 
