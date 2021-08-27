@@ -26,7 +26,7 @@ App converts [Supervisely format](https://docs.supervise.ly/data-organization/00
 Application key points:  
 - Supports only **instances.json** from **COCO** format
 - Polygons without holes are supported
-<!-- - Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco) (**WIP**) -->
+- Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco)
 
 
 # How to Use
