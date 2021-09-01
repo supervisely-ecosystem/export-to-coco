@@ -102,7 +102,7 @@ def create_coco_annotation(meta, categories_mapping, dataset, user_name, image_i
                 id=label_id,                                            # Each annotation also has an id (unique to all other annotations in the dataset)
             ))
         progress.iter_done_report()
-    return coco_ann
+    return coco_ann, label_id
 
 
 def upload_coco_project(full_archive_name, result_archive, app_logger):
