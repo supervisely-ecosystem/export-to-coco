@@ -5,6 +5,8 @@ from supervisely_lib.io.fs import mkdir
 my_app = sly.AppService()
 api: sly.Api = my_app.public_api
 
+selected_format = os.environ['modal.state.selectedFormat']
+
 task_id = os.environ["TASK_ID"]
 user_id = os.environ["context.userId"]
 team_id = int(os.environ['context.teamId'])
