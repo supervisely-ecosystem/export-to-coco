@@ -1,7 +1,7 @@
 import os
 import globals as g
-import supervisely_lib as sly
-from supervisely_lib.io.fs import mkdir
+import supervisely as sly
+from supervisely.io.fs import mkdir
 
 
 def get_categories_map_from_meta(meta):
@@ -122,5 +122,5 @@ def upload_coco_project(full_archive_name, result_archive, app_logger):
 
     file_info = g.api.file.upload(g.team_id, result_archive, remote_archive_path,
                                   lambda m: _print_progress(m, upload_progress))
-    app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.full_storage_url))
-    g.api.task.set_output_archive(g.task_id, file_info.id, full_archive_name, file_url=file_info.full_storage_url)
+    app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.storage_path))
+    g.api.task.set_output_archive(g.task_id, file_info.id, full_archive_name, file_url=file_info.storage_path)
