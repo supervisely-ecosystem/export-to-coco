@@ -3,7 +3,7 @@ import json
 import globals as g
 import functions as f
 import convert_geometry
-import supervisely_lib as sly
+import supervisely as sly
 
 
 @g.my_app.callback("export_to_coco")

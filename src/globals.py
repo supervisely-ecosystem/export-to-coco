@@ -1,8 +1,9 @@
 import os
-import supervisely_lib as sly
-from supervisely_lib.io.fs import mkdir
+import supervisely as sly
+from supervisely.io.fs import mkdir
+from supervisely.app.v1.app_service import AppService
 
-my_app = sly.AppService()
+my_app = AppService()
 api: sly.Api = my_app.public_api
 
 selected_format = os.environ['modal.state.selectedFormat']
