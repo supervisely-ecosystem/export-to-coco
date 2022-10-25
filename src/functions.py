@@ -106,7 +106,7 @@ def create_coco_annotation(meta, categories_mapping, dataset, user_name, image_i
 
 
 def upload_coco_project(full_archive_name, result_archive, app_logger):
-    sly.fs.archive_directory(g.coco_base_dir, result_archive)
+    sly.fs.archive_directory(g.storage_dir, result_archive)
     app_logger.info("Result directory is archived")
 
     upload_progress = []
