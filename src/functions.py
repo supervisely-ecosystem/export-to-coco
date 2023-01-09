@@ -110,7 +110,8 @@ def upload_coco_project(full_archive_name, result_archive, app_logger):
     app_logger.info("Result directory is archived")
 
     upload_progress = []
-    remote_archive_path = f"/Export to COCO/{full_archive_name}"
+    remote_archive_path = os.path.join(
+        sly.team_files.RECOMMENDED_EXPORT_PATH, f"export-to-COCO/{full_archive_name}")
 
     def _print_progress(monitor, upload_progress):
         if len(upload_progress) == 0:
