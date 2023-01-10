@@ -77,7 +77,7 @@ def create_coco_annotation(meta, categories_mapping, dataset, user_name, image_i
         coco_ann["images"].append(dict(
             license="None",
             file_name=image_info.name,
-            url=image_info.full_storage_url,  # coco_url, flickr_url
+            url="None", # image_info.full_storage_url,  # coco_url, flickr_url
             height=image_info.height,
             width=image_info.width,
             date_captured=image_info.created_at,
