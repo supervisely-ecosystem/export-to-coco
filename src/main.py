@@ -38,7 +38,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
         for batch in sly.batched(images):
             image_ids = [image_info.id for image_info in batch]
 
-            if g.selected_format == "images":
+            if g.selected_format in ["images", "annotatedImages"]:
                 image_paths = [
                     os.path.join(coco_dataset_dir, img_dir, image_info.name) for image_info in batch
                 ]
