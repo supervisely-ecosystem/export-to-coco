@@ -21,7 +21,7 @@
       description="Choose whether you want to export all images or only annotated images (that have either labels or tags)"
     >
       <div>
-        <el-radio-group v-model="state.selectedOutput" size="normal">
+        <el-radio-group v-model="state.selectedFilter" size="normal">
           <div>
             <el-radio label="all"> <span>all images</span></el-radio>
           </div>
@@ -38,11 +38,11 @@
     </sly-field>
 
     <sly-field
-      title="Select format"
+      title="Select output"
       description="Choose between exporting images with annotations or only annotations (.json)"
     >
       <div>
-        <el-radio-group v-model="state.selectedFormat" size="normal">
+        <el-radio-group v-model="state.selectedOutput" size="normal">
           <div>
             <el-radio label="images">
               <span>images and annotations</span>
