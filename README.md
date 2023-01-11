@@ -27,8 +27,8 @@ Application key points:
 - Only polygons without holes and bounding boxes are supported
 - Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco)
 
-
 # How to Use
+
 1. Add [Export to COCO](https://ecosystem.supervise.ly/apps/export-to-coco) to your team from Ecosystem.
 
 <img data-key="sly-module-link" data-module-slug="supervisely-ecosystem/export-to-coco" src="https://imgur.com/OxqtYTS.png" width="350px" style='padding-bottom: 20px'/>  
@@ -36,6 +36,13 @@ Application key points:
 2. Run app from the context menu of **Images Project**:
 
 <img src="https://imgur.com/0JwLqYJ.png" width="100%"/>
+
+3. Select options in the modal window and press the **RUN** button
+
+<div align="center" markdown>
+  <img src="https://user-images.githubusercontent.com/48913536/211818281-a98def47-e3b6-4227-868b-78f4a89b5b4e.png" width="70%"/>
+</div>
+
 
 # Results
 
