@@ -13,7 +13,7 @@
   "headless": true,
   "modal_template_state": {
     "allDatasets": true,
-    "selectedDatasets": [],
+    "datasets": [],
     "selectedFormat": "images"
   },
   "context_menu": {
