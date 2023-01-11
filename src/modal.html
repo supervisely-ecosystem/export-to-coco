@@ -1,24 +1,40 @@
 <div>
-    <div v-if="!context.datasetId">
-        <sly-field title="Select Datasets" description="">
-            <sly-select-dataset :project-id="context.projectId" :datasets.sync="state.datasets"
-                :options="{ multiple: true, valueProperty: 'id' }"></sly-select-dataset>
-        </sly-field>
-    </div>
+  <div v-if="!context.datasetId">
+    <sly-field
+      title="Select Datasets"
+      description="Export whole project or select specific datasets in the selector"
+    >
+      <el-checkbox v-model="state.allDatasets">Export all datasets</el-checkbox>
 
-    <div>
-        <sly-field title="Select output format" description="Choose between options">
-            <el-radio-group v-model="state.selectedFormat" size="normal" @change="command('solo_mode_changed')">
-                <div>
-                    <el-radio label="images">Images and annotations</el-radio>
-                </div>
-                <div>
-                    <el-radio label="annotated-images">Only annotated images</el-radio>
-                </div>
-                <div>
-                    <el-radio label="annotations">Only annotations (.json)</el-radio>
-                </div>
-            </el-radio-group>
-        </sly-field>
-    </div>
+      <sly-select-dataset
+        v-if="!state.allDatasets"
+        :project-id="state.projectId"
+        :datasets.sync="state.datasets"
+        :options="{ multiple: true, valueProperty: 'id' }"
+      ></sly-select-dataset>
+    </sly-field>
+  </div>
+
+  <div>
+    <sly-field
+      title="Select output format"
+      description="Choose between options"
+    >
+      <el-radio-group
+        v-model="state.selectedFormat"
+        size="normal"
+        @change="command('solo_mode_changed')"
+      >
+        <div>
+          <el-radio label="images">Images and annotations</el-radio>
+        </div>
+        <div>
+          <el-radio label="annotatedImages">Only annotated images</el-radio>
+        </div>
+        <div>
+          <el-radio label="annotations">Only annotations (.json)</el-radio>
+        </div>
+      </el-radio-group>
+    </sly-field>
+  </div>
 </div>
