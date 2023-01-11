@@ -17,26 +17,33 @@
 
   <div>
     <sly-field
-      title="Select output format"
-      description="Choose between options"
+      title="Select format"
+      description="Choose between exporting images with annotations or only annotations (.json)"
     >
-      <el-radio-group
-        v-model="state.selectedFormat"
-        size="normal"
-        @change="command('solo_mode_changed')"
-      >
-        <div>
-          <el-radio label="images">Images and annotations</el-radio>
-        </div>
-        <div>
-          <el-radio label="annotatedImages"
-            >Only annotated images (with labels or tags)</el-radio
+      <div>
+        <el-radio-group v-model="state.selectedFormat" size="normal">
+          <el-radio-button label="images"
+            ><span>images and annotations</span></el-radio-button
           >
-        </div>
-        <div>
-          <el-radio label="annotations">Only annotations (.json)</el-radio>
-        </div>
-      </el-radio-group>
+          <el-radio-button label="annotations">
+            <span>only annotations</span></el-radio-button
+          >
+        </el-radio-group>
+      </div>
+    </sly-field>
+
+    <sly-field
+      title="Select output"
+      :description="state.selectedFormat === 'images' ? 'Choose whether you want to export all images or only annotated images (that have either labels or tags)' : 'Choose whether you want to export annotations for all images or only annotated images (that have either labels or tags)'"
+    >
+      <div>
+        <el-radio-group v-model="state.selectedOutput" size="normal">
+          <el-radio-button label="all">
+            <span>all images</span></el-radio-button
+          >
+          <el-radio-button label="annotated">annotated images</el-radio-button>
+        </el-radio-group>
+      </div>
     </sly-field>
   </div>
 </div>

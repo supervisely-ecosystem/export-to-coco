@@ -14,7 +14,8 @@
   "modal_template_state": {
     "allDatasets": true,
     "datasets": [],
-    "selectedFormat": "images"
+    "selectedFormat": "images",
+    "selectedOutput": "all"
   },
   "context_menu": {
     "target": ["images_project"],
