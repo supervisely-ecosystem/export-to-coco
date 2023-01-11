@@ -1,4 +1,6 @@
 import os
+import ast
+from distutils.util import strtobool
 import supervisely as sly
 from supervisely.io.fs import mkdir
 from supervisely.app.v1.app_service import AppService
@@ -12,8 +14,8 @@ my_app = AppService()
 api: sly.Api = my_app.public_api
 
 selected_format = os.environ["modal.state.selectedFormat"]
-all_datasets = os.environ["modal.state.allDatasets"]
-selected_datasets = os.environ["modal.state.datasets"]
+all_datasets = bool(strtobool(os.getenv("modal.state.allDatasets")))
+selected_datasets = ast.literal_eval(os.environ["modal.state.datasets"])
 
 task_id = os.environ["TASK_ID"]
 user_id = os.environ["context.userId"]
