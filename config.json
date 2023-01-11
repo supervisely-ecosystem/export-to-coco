@@ -1,10 +1,7 @@
 {
   "name": "Export to COCO",
   "type": "app",
-  "categories": [
-    "images",
-    "export"
-  ],
+  "categories": ["images", "export"],
   "description": "Converts Supervisely to COCO format and prepares tar archive for download",
   "docker_image": "supervisely/base-py-sdk:6.68.106",
   "instance_version": "6.4.57",
@@ -15,12 +12,12 @@
   "icon_background": "#FFFFFF",
   "headless": true,
   "modal_template_state": {
-    "selectedFormat": "annotations"
+    "allDatasets": true,
+    "selectedDatasets": [],
+    "selectedFormat": "images"
   },
   "context_menu": {
-    "target": [
-      "images_project"
-    ],
+    "target": ["images_project"],
     "context_root": "Download as"
   },
   "poster": "https://user-images.githubusercontent.com/48913536/183899083-64d7683d-57f9-4f7a-b5f4-bf9e7ffd3246.png"

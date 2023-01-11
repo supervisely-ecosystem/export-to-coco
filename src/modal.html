@@ -8,7 +8,7 @@
 
       <sly-select-dataset
         v-if="!state.allDatasets"
-        :project-id="state.projectId"
+        :project-id="context.projectId"
         :datasets.sync="state.datasets"
         :options="{ multiple: true, valueProperty: 'id' }"
       ></sly-select-dataset>
