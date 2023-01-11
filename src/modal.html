@@ -1,18 +1,24 @@
 <div>
-    <div class="fflex mt5"
-             style="padding: 2px 14px; padding-bottom: 24px; flex-direction: column; align-items: center; justify-content: center;">
-            <div class="fflex mb10"
-                 style="flex-direction: column; align-items: flex-end; justify-content: flex-start;">
-                <div style="padding-top: 2px; font-size: 14px; margin-right: 5px; font-weight: 500">Select format</div>
+    <div v-if="!context.datasetId">
+        <sly-field title="Select Datasets" description="">
+            <sly-select-dataset :project-id="context.projectId" :datasets.sync="state.datasets"
+                :options="{ multiple: true, valueProperty: 'id' }"></sly-select-dataset>
+        </sly-field>
+    </div>
 
-
-            </div>
+    <div>
+        <sly-field title="Select output format" description="Choose between options">
             <el-radio-group v-model="state.selectedFormat" size="normal" @change="command('solo_mode_changed')">
-                <el-radio-button label="annotations">
-                    <span>only annotations</span></el-radio-button>
-                <el-radio-button label="images">images and annotations</el-radio-button>
+                <div>
+                    <el-radio label="images">Images and annotations</el-radio>
+                </div>
+                <div>
+                    <el-radio label="annotated-images">Only annotated images</el-radio>
+                </div>
+                <div>
+                    <el-radio label="annotations">Only annotations (.json)</el-radio>
+                </div>
             </el-radio-group>
-
-
-        </div>
+        </sly-field>
+    </div>
 </div>
