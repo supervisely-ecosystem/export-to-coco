@@ -37,5 +37,10 @@
       </el-radio-group>
     </sly-field>
   </div>
-  {{state.datasets}}
+  <pre>
+    {{ JSON.stringify(state, undefined, 2) }}
+  </pre>
+  <pre>
+     {{state.allDatasets}} {{state.selectedFormat}} {{state.datasets}}
+  </pre>
 </div>
