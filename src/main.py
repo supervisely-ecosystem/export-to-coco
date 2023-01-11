@@ -28,7 +28,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
         images = api.image.get_list(dataset.id)
 
         if g.selected_format == "annotatedImages":
-            images = [image for image in images if image.labels_count > 0]
+            images = [image for image in images if image.labels_count > 0 or len(image.tags) > 0]
 
         ds_progress = sly.Progress(
             f"Converting dataset: {dataset.name}",
