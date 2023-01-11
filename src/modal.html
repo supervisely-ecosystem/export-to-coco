@@ -1,18 +1,62 @@
 <div>
-    <div class="fflex mt5"
-             style="padding: 2px 14px; padding-bottom: 24px; flex-direction: column; align-items: center; justify-content: center;">
-            <div class="fflex mb10"
-                 style="flex-direction: column; align-items: flex-end; justify-content: flex-start;">
-                <div style="padding-top: 2px; font-size: 14px; margin-right: 5px; font-weight: 500">Select format</div>
+  <div v-if="!context.datasetId">
+    <sly-field
+      title="Select Datasets"
+      description="Export whole project or select specific datasets in the selector"
+    >
+      <el-checkbox v-model="state.allDatasets">Export all datasets</el-checkbox>
 
+      <sly-select-dataset
+        v-if="!state.allDatasets"
+        :project-id="context.projectId"
+        :datasets.sync="state.datasets"
+        :options="{ multiple: true, valueProperty: 'id' }"
+      ></sly-select-dataset>
+    </sly-field>
+  </div>
 
-            </div>
-            <el-radio-group v-model="state.selectedFormat" size="normal" @change="command('solo_mode_changed')">
-                <el-radio-button label="annotations">
-                    <span>only annotations</span></el-radio-button>
-                <el-radio-button label="images">images and annotations</el-radio-button>
-            </el-radio-group>
+  <div>
+    <sly-field
+      title="Filter images"
+      description="Choose whether you want to export all images or only annotated images (that have either labels or tags)"
+    >
+      <div>
+        <el-radio-group v-model="state.selectedFilter" size="normal">
+          <div>
+            <el-radio label="all"> <span>all images</span></el-radio>
+          </div>
+          <div>
+            <el-radio
+              label="annotated"
+              style="display: flex; align-items: center"
+              ><span style="white-space: normal"
+                >only annotated images (images without annotations will be
+                skipped and will not be presented in the output archive)</span
+              ></el-radio
+            >
+          </div>
+        </el-radio-group>
+      </div>
+    </sly-field>
 
-
-        </div>
+    <sly-field
+      title="Select output"
+      description="Choose between exporting images with annotations or only annotations (.json)"
+    >
+      <div>
+        <el-radio-group v-model="state.selectedOutput" size="normal">
+          <div>
+            <el-radio label="images">
+              <span>images and annotations</span>
+            </el-radio>
+          </div>
+          <div>
+            <el-radio label="annotations">
+              <span>only annotations (.json)</span></el-radio
+            >
+          </div>
+        </el-radio-group>
+      </div>
+    </sly-field>
+  </div>
 </div>

@@ -1,4 +1,5 @@
 .idea
+.venv
 venv
 debug
 /src/debug
