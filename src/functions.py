@@ -101,8 +101,11 @@ def create_coco_annotation(
         )
 
         for label in ann.labels:
-            segmentation = label.geometry.to_json()["points"]["exterior"]
-            segmentation = coco_segmentation(segmentation)
+            if g.rectangle_mark in label.description:
+                segmentation = []
+            else:
+                segmentation = label.geometry.to_json()["points"]["exterior"]
+                segmentation = [coco_segmentation(segmentation)]
 
             bbox = label.geometry.to_bbox().to_json()["points"]["exterior"]
             bbox = coco_bbox(bbox)
@@ -110,9 +113,7 @@ def create_coco_annotation(
             label_id += 1
             coco_ann["annotations"].append(
                 dict(
-                    segmentation=[
-                        segmentation
-                    ],  # a list of polygon vertices around the object, but can also be a run-length-encoded (RLE) bit mask
+                    segmentation=segmentation,  # a list of polygon vertices around the object, but can also be a run-length-encoded (RLE) bit mask
                     area=label.geometry.area,  # Area is measured in pixels (e.g. a 10px by 20px box would have an area of 200)
                     iscrowd=0,  # Is Crowd specifies whether the segmentation is for a single object or for a group/cluster of objects
                     image_id=image_info.id,  # The image id corresponds to a specific image in the dataset
