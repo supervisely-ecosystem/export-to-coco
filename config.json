@@ -1,30 +1,25 @@
 {
-    "name": "Export to COCO",
-    "type": "app",
-    "categories": [
-        "images",
-        "export"
-    ],
-    "description": "Converts Supervisely to COCO format and prepares tar archive for download",
-    "docker_image": "supervisely/import-export:0.0.2",
-    "instance_version": "6.4.57",
-    "main_script": "src/main.py",
-    "modal_template": "src/modal.html",
-    "task_location": "workspace_tasks",
-    "icon": "https://i.imgur.com/9uY44aW.png",
-    "icon_background": "#FFFFFF",
-    "headless": true,
-    "modal_template_state": {
-        "allDatasets": true,
-        "datasets": [],
-        "selectedFilter": "all",
-        "selectedOutput": "images"
-    },
-    "context_menu": {
-        "target": [
-            "images_project"
-        ],
-        "context_root": "Download as"
-    },
-    "poster": "https://user-images.githubusercontent.com/48913536/183899083-64d7683d-57f9-4f7a-b5f4-bf9e7ffd3246.png"
+  "name": "Export to COCO",
+  "type": "app",
+  "categories": ["images", "export"],
+  "description": "Converts Supervisely to COCO format and prepares tar archive for download",
+  "docker_image": "supervisely/import-export:0.0.5",
+  "instance_version": "6.4.57",
+  "main_script": "src/main.py",
+  "modal_template": "src/modal.html",
+  "task_location": "workspace_tasks",
+  "icon": "https://i.imgur.com/9uY44aW.png",
+  "icon_background": "#FFFFFF",
+  "headless": true,
+  "modal_template_state": {
+    "allDatasets": true,
+    "datasets": [],
+    "selectedFilter": "all",
+    "selectedOutput": "images"
+  },
+  "context_menu": {
+    "target": ["images_project"],
+    "context_root": "Download as"
+  },
+  "poster": "https://user-images.githubusercontent.com/48913536/183899083-64d7683d-57f9-4f7a-b5f4-bf9e7ffd3246.png"
 }
