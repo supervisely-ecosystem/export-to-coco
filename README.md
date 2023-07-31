@@ -20,7 +20,7 @@
 
 # Overview
 
-App converts [Supervisely format](https://docs.supervise.ly/data-organization/00_ann_format_navi) project to [COCO format](https://cocodataset.org/#home) as **downloadable .tar archive**
+App converts [Supervisely format](https://docs.supervise.ly/data-organization/00_ann_format_navi) project to [COCO format](https://cocodataset.org/#home) as a **downloadable .tar archive**
 
 Application key points:  
 - Supports only **instances.json** from **COCO** format
