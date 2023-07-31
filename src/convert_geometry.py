@@ -31,7 +31,7 @@ def convert_annotation(ann: sly.Annotation, dst_meta):
                     converted_label.append(new_label)
                 new_labels.extend(converted_label)
         except NotImplementedError as e:
-            logger.critical(
+            logger.warning(
                 f"Unsupported conversion of annotation '{lbl.obj_class.geometry_type.name()}' type to '{new_cls.geometry_type.name()}'. Skipping annotation with [ID: {lbl.to_json()['id']}]",
                 exc_info=False,
             )
