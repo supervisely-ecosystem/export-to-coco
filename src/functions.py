@@ -155,7 +155,7 @@ def upload_coco_project(full_archive_name, result_archive, app_logger):
         remote_archive_path,
         lambda m: _print_progress(m, upload_progress),
     )
-    app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.storage_path))
+    app_logger.info("Uploaded to Team Files: {!r}".format(file_info.storage_path))
     g.api.task.set_output_archive(
         g.task_id, file_info.id, full_archive_name, file_url=file_info.storage_path
     )
