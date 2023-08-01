@@ -1,7 +1,10 @@
 import os
-
+import numpy as np
 import supervisely as sly
+
 from supervisely.io.fs import mkdir
+from itertools import groupby
+from supervisely.geometry import bitmap
 
 import globals as g
 
@@ -35,6 +38,24 @@ def get_project_contributors():
 def coco_segmentation(segmentation):  # works only with external vertices for now
     segmentation = [float(coord) for sublist in segmentation for coord in sublist]
     return segmentation
+
+
+def extend_mask_up_to_image(binary_mask, image_shape, origin):
+    y, x = origin.col, origin.row
+    new_mask = np.zeros(image_shape, dtype=binary_mask.dtype)
+    new_mask[x : x + binary_mask.shape[0], y : y + binary_mask.shape[1]] = binary_mask
+    return new_mask
+
+
+def coco_segmentation_rle(segmentation):
+    binary_mask = np.asfortranarray(segmentation)
+    rle = {"counts": [], "size": list(binary_mask.shape)}
+    counts = rle.get("counts")
+    for i, (value, elements) in enumerate(groupby(binary_mask.ravel(order="F"))):
+        if i == 0 and value == 1:
+            counts.append(0)
+        counts.append(len(list(elements)))
+    return rle
 
 
 def coco_bbox(bbox):
@@ -103,6 +124,13 @@ def create_coco_annotation(
         for label in ann.labels:
             if g.rectangle_mark in label.description:
                 segmentation = []
+            elif label.geometry.name() == bitmap.Bitmap.name():
+                segmentation = extend_mask_up_to_image(
+                    label.geometry.data,
+                    (image_info.height, image_info.width),
+                    label.geometry.origin,
+                )
+                segmentation = coco_segmentation_rle(segmentation)
             else:
                 segmentation = label.geometry.to_json()["points"]["exterior"]
                 segmentation = [coco_segmentation(segmentation)]
