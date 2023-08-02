@@ -58,6 +58,6 @@ To explore warnings just open `Log` in the `⋮` menu:
 <img width="724" alt="logs" src="https://github.com/supervisely-ecosystem/export-to-coco/assets/57998637/7eb775a3-973c-4d6c-be87-dbfcc23922c7">
 
 You can also find your converted project in   
-`Team Files` -> `Export to COCO` -> `<taskId>_<projectName>.tar`
+`Team Files` -> `tmp` -> `supervisely` -> `export` -> `export-to-COCO` -> `<taskId>_<projectName>.tar`
 
 <img src="https://github.com/supervisely-ecosystem/export-to-coco/assets/57998637/5f4353b3-bbb4-4d48-87df-77dceaea6d96"/>
