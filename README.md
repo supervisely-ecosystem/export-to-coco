@@ -22,9 +22,14 @@
 
 App converts [Supervisely format](https://docs.supervise.ly/data-organization/00_ann_format_navi) project to [COCO format](https://cocodataset.org/#home) as a **downloadable .tar archive**
 
-Application key points:  
-- Supports only **instances.json** from **COCO** format
-- Only polygons without holes and bounding boxes are supported
+Application key points:
+
+- <img src='https://img.shields.io/badge/Version-1.3.0-blue'/>
+  
+  🔥 Saves **Supervisely** polylines to **COCO** RLE mask that is represented as a 2px line!
+- Supports **instances.json** from **COCO** format
+- Сonverts **Supervisely** polygons, rectangles, bitmaps to **COCO** polygons and bboxes.
+- 👉 Сonverts annotations to polygons without preserving holes. To preserve holes you need to use [Export to COCO mask](https://ecosystem.supervise.ly/apps/export-to-coco-mask)
 - Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco)
 
 # How to Use
