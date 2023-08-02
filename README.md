@@ -28,14 +28,14 @@ Application key points:
 - Сonverts **Supervisely** polygons, rectangles, bitmaps to **COCO** polygons and bboxes.
 - ⚠️ Сonverts annotations without preserving holes.
   
-  👉 To preserve holes in polygones or export polylines it's best to use  [Export to COCO mask](https://ecosystem.supervise.ly/apps/export-to-coco-mask)
+  👉 To preserve holes in polygons or export polylines it's best to use [Export to COCO mask](https://ecosystem.supervise.ly/apps/export-to-coco-mask)
 - Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco)
 
 # How to Use
 
 1. Add [Export to COCO](https://ecosystem.supervise.ly/apps/export-to-coco) to your team from Ecosystem
 
-   <img data-key="sly-module-link" data-module-slug="supervisely-ecosystem/export-to-coco" src="https://github.com/supervisely-ecosystem/export-to-coco/assets/57998637/bfa7283a-9b71-4f88-ae2c-edc63fc848d2" width="350px" style='padding-bottom: 20px'/>  
+   <img data-key="sly-module-link" data-module-slug="supervisely-ecosystem/export-to-coco" src="https://github.com/supervisely-ecosystem/export-to-coco/assets/57998637/81341c23-8803-4fc0-85e6-06802b833ec8" width="350px" style='padding-bottom: 20px'/>  
 
 2. Run app from the context menu of **Images Project**:
 
