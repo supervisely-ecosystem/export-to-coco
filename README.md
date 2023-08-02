@@ -24,12 +24,11 @@ App converts [Supervisely format](https://docs.supervise.ly/data-organization/00
 
 Application key points:
 
-- <img src='https://img.shields.io/badge/Version-1.3.0-blue'/>
-  
-  🔥 Saves **Supervisely** polylines to **COCO** RLE mask, which is a 2px thick line!
 - Supports **instances.json** from **COCO** format
 - Сonverts **Supervisely** polygons, rectangles, bitmaps to **COCO** polygons and bboxes.
-- 👉 Сonverts annotations to polygons without preserving holes. To preserve holes you need to use [Export to COCO mask](https://ecosystem.supervise.ly/apps/export-to-coco-mask)
+- <div>⚠️ Сonverts annotations without preserving holes.
+  
+  👉 To preserve holes in polygones or export polylines it's best to use  [Export to COCO mask](https://ecosystem.supervise.ly/apps/export-to-coco-mask)</div>
 - Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco)
 
 # How to Use
@@ -43,10 +42,8 @@ Application key points:
 <img src="https://imgur.com/0JwLqYJ.png" width="100%"/>
 
 3. Select options in the modal window and press the **RUN** button
+  <img src="https://user-images.githubusercontent.com/48913536/211818281-a98def47-e3b6-4227-868b-78f4a89b5b4e.png" width=60%/>
 
-<div align="center" markdown>
-  <img src="https://user-images.githubusercontent.com/48913536/211818281-a98def47-e3b6-4227-868b-78f4a89b5b4e.png" width="70%"/>
-</div>
 
 
 # Results
