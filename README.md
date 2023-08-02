@@ -26,9 +26,9 @@ Application key points:
 
 - Supports **instances.json** from **COCO** format
 - Сonverts **Supervisely** polygons, rectangles, bitmaps to **COCO** polygons and bboxes.
-- <div>⚠️ Сonverts annotations without preserving holes.
+- ⚠️ Сonverts annotations without preserving holes.
   
-  👉 To preserve holes in polygones or export polylines it's best to use  [Export to COCO mask](https://ecosystem.supervise.ly/apps/export-to-coco-mask)</div>
+  👉 To preserve holes in polygones or export polylines it's best to use  [Export to COCO mask](https://ecosystem.supervise.ly/apps/export-to-coco-mask)
 - Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco)
 
 # How to Use
@@ -55,7 +55,7 @@ After running the application, you will be redirected to the `Tasks` page. Once 
 
 To explore warnings just open `Log` in the `⋮` menu:
 
-<img width="724" alt="logs" src="https://github.com/supervisely-ecosystem/export-to-coco/assets/57998637/7eb775a3-973c-4d6c-be87-dbfcc23922c7">
+<img src="https://github.com/supervisely-ecosystem/export-to-coco/assets/57998637/7eb775a3-973c-4d6c-be87-dbfcc23922c7">
 
 You can also find your converted project in   
 `Team Files` -> `tmp` -> `supervisely` -> `export` -> `export-to-COCO` -> `<taskId>_<projectName>.tar`
