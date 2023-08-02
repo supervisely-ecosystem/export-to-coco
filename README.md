@@ -26,7 +26,7 @@ Application key points:
 
 - <img src='https://img.shields.io/badge/Version-1.3.0-blue'/>
   
-  🔥 Saves **Supervisely** polylines to **COCO** RLE mask that is represented as a 2px line!
+  🔥 Saves **Supervisely** polylines to **COCO** RLE mask, which is a 2px thick line!
 - Supports **instances.json** from **COCO** format
 - Сonverts **Supervisely** polygons, rectangles, bitmaps to **COCO** polygons and bboxes.
 - 👉 Сonverts annotations to polygons without preserving holes. To preserve holes you need to use [Export to COCO mask](https://ecosystem.supervise.ly/apps/export-to-coco-mask)
