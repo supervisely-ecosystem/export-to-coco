@@ -27,29 +27,7 @@ def convert_annotation(ann: sly.Annotation, dst_meta):
             else:
                 converted_label = lbl.convert(new_cls)
                 if lbl.obj_class.geometry_type == polyline.Polyline:
-                    new_mask = np.zeros(ann.img_size, dtype=np.uint8)
-                    polyline_points = lbl.geometry.rotate(
-                        image_rotator.ImageRotator(ann.img_size[::-1], 90)
-                    )
-                    polyline_points = polyline_points.flipud(ann.img_size)
-                    polyline_points = polyline_points.exterior_np
-                    new_mask = cv2.polylines(
-                        new_mask,
-                        [polyline_points],
-                        isClosed=False,
-                        color=255,
-                        thickness=2,
-                    )
-
-                    new_geometry = bitmap.Bitmap(new_mask)
-                    cloned_obj_class = new_cls.clone(geometry_type=bitmap.Bitmap)
-                    new_label = lbl.clone(
-                        geometry=new_geometry,
-                        obj_class=cloned_obj_class,
-                    )
-
-                    new_labels.extend([new_label])
-                    continue
+                    raise NotImplementedError
                 if lbl.obj_class.geometry_type == rectangle.Rectangle:
                     new_descr = converted_label[0].description + " " + rectangle_mark
                     new_label = converted_label[0].clone(description=new_descr)
