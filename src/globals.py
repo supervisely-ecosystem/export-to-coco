@@ -26,6 +26,7 @@ project_id = int(os.environ["modal.state.slyProjectId"])
 
 # user = api.user.get_info_by_id(user_id)
 user_name = "Supervisely"
+rectangle_mark = "converted_from_rectangle"
 project = api.project.get_info_by_id(project_id)
 meta_json = api.project.get_meta(project_id)
 meta = sly.ProjectMeta.from_json(meta_json)

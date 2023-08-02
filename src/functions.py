@@ -1,7 +1,10 @@
 import os
-
+import numpy as np
 import supervisely as sly
+
 from supervisely.io.fs import mkdir
+from itertools import groupby
+from supervisely.geometry import bitmap
 
 import globals as g
 
@@ -35,6 +38,24 @@ def get_project_contributors():
 def coco_segmentation(segmentation):  # works only with external vertices for now
     segmentation = [float(coord) for sublist in segmentation for coord in sublist]
     return segmentation
+
+
+def extend_mask_up_to_image(binary_mask, image_shape, origin):
+    y, x = origin.col, origin.row
+    new_mask = np.zeros(image_shape, dtype=binary_mask.dtype)
+    new_mask[x : x + binary_mask.shape[0], y : y + binary_mask.shape[1]] = binary_mask
+    return new_mask
+
+
+def coco_segmentation_rle(segmentation):
+    binary_mask = np.asfortranarray(segmentation)
+    rle = {"counts": [], "size": list(binary_mask.shape)}
+    counts = rle.get("counts")
+    for i, (value, elements) in enumerate(groupby(binary_mask.ravel(order="F"))):
+        if i == 0 and value == 1:
+            counts.append(0)
+        counts.append(len(list(elements)))
+    return rle
 
 
 def coco_bbox(bbox):
@@ -101,8 +122,18 @@ def create_coco_annotation(
         )
 
         for label in ann.labels:
-            segmentation = label.geometry.to_json()["points"]["exterior"]
-            segmentation = coco_segmentation(segmentation)
+            if g.rectangle_mark in label.description:
+                segmentation = []
+            elif label.geometry.name() == bitmap.Bitmap.name():
+                segmentation = extend_mask_up_to_image(
+                    label.geometry.data,
+                    (image_info.height, image_info.width),
+                    label.geometry.origin,
+                )
+                segmentation = coco_segmentation_rle(segmentation)
+            else:
+                segmentation = label.geometry.to_json()["points"]["exterior"]
+                segmentation = [coco_segmentation(segmentation)]
 
             bbox = label.geometry.to_bbox().to_json()["points"]["exterior"]
             bbox = coco_bbox(bbox)
@@ -110,9 +141,7 @@ def create_coco_annotation(
             label_id += 1
             coco_ann["annotations"].append(
                 dict(
-                    segmentation=[
-                        segmentation
-                    ],  # a list of polygon vertices around the object, but can also be a run-length-encoded (RLE) bit mask
+                    segmentation=segmentation,  # a list of polygon vertices around the object, but can also be a run-length-encoded (RLE) bit mask
                     area=label.geometry.area,  # Area is measured in pixels (e.g. a 10px by 20px box would have an area of 200)
                     iscrowd=0,  # Is Crowd specifies whether the segmentation is for a single object or for a group/cluster of objects
                     image_id=image_info.id,  # The image id corresponds to a specific image in the dataset
@@ -154,7 +183,7 @@ def upload_coco_project(full_archive_name, result_archive, app_logger):
         remote_archive_path,
         lambda m: _print_progress(m, upload_progress),
     )
-    app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.storage_path))
+    app_logger.info("Uploaded to Team Files: {!r}".format(file_info.storage_path))
     g.api.task.set_output_archive(
         g.task_id, file_info.id, full_archive_name, file_url=file_info.storage_path
     )

@@ -20,7 +20,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
     label_id = 0
 
     for dataset in datasets:
-        sly.logger.info(f"processing {dataset.name}...")
+        sly.logger.info(f"Processing dataset [{dataset.name}] ...")
         coco_dataset_dir = os.path.join(g.coco_base_dir, dataset.name)
         img_dir, ann_dir = f.create_coco_dataset(coco_dataset_dir)
 
@@ -61,7 +61,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
         with open(os.path.join(ann_dir, "instances.json"), "w") as file:
             json.dump(coco_ann, file)
 
-        sly.logger.info(f"dataset {dataset.name} processed!")
+        sly.logger.info(f"Dataset [{dataset.name}] processed!")
 
     full_archive_name = f"{task_id}_{g.project.name}.tar"
     result_archive = os.path.join(g.my_app.data_dir, full_archive_name)
