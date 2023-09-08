@@ -21,7 +21,7 @@ def convert_annotation(ann_info, img_info, src_meta, dst_meta):
     try:
         ann = sly.Annotation.from_json(ann_info.annotation, src_meta)
     except:
-        return sly.Annotation(img_info["height"], img_info["width"])
+        return sly.Annotation(img_info.height, img_info.width)
     new_labels = []
     for lbl in ann.labels:
         try:
