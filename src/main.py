@@ -45,8 +45,11 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
                 api.image.download_paths(dataset.id, image_ids, image_paths)
 
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
-            anns = [sly.Annotation.from_json(x.annotation, g.meta) for x in ann_infos]
-            anns = [convert_geometry.convert_annotation(ann, meta) for ann in anns]
+            anns = []
+            for ann_info, img_info in zip(ann_infos, batch):
+                ann = convert_geometry.convert_annotation(ann_info, img_info, g.meta, meta)
+                anns.append(ann)
+
             coco_ann, label_id = f.create_coco_annotation(
                 meta,
                 categories_mapping,

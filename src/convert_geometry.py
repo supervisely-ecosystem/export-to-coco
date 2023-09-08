@@ -17,7 +17,11 @@ def prepare_meta(meta):
     return meta
 
 
-def convert_annotation(ann: sly.Annotation, dst_meta):
+def convert_annotation(ann_info, img_info, src_meta, dst_meta):
+    try:
+        ann = sly.Annotation.from_json(ann_info.annotation, src_meta)
+    except:
+        return sly.Annotation(img_info["height"], img_info["width"])
     new_labels = []
     for lbl in ann.labels:
         try:
