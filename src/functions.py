@@ -77,49 +77,28 @@ def create_coco_dataset(coco_dataset_dir):
 
 
 def create_coco_annotation(
-    meta,
     categories_mapping,
-    dataset,
-    user_name,
     image_infos,
     anns,
     label_id,
     coco_ann,
+    caption_id,
+    coco_captions,
     progress,
 ):
-    if len(coco_ann) == 0:
-        coco_ann = dict(
-            info=dict(
-                description=dataset.description,
-                url="None",
-                version=str(1.0),
-                year=int(dataset.created_at[:4]),
-                contributor=user_name,
-                date_created=dataset.created_at,
-            ),
-            licenses=[dict(url="None", id=0, name="None")],
-            images=[
-                # license, url, file_name, height, width, date_captured, id
-            ],
-            # type="instances",
-            annotations=[
-                # segmentation, area, iscrowd, image_id, bbox, category_id, id
-            ],
-            categories=get_categories_from_meta(meta),  # supercategory, id, name
-        )
-
     for image_info, ann in zip(image_infos, anns):
-        coco_ann["images"].append(
-            dict(
-                license="None",
-                file_name=image_info.name,
-                url="None",  # image_info.full_storage_url,  # coco_url, flickr_url
-                height=image_info.height,
-                width=image_info.width,
-                date_captured=image_info.created_at,
-                id=image_info.id,
-            )
+        image_coco_ann = dict(
+            license="None",
+            file_name=image_info.name,
+            url="None",  # image_info.full_storage_url,  # coco_url, flickr_url
+            height=image_info.height,
+            width=image_info.width,
+            date_captured=image_info.created_at,
+            id=image_info.id,
         )
+        coco_ann["images"].append(image_coco_ann)
+        if coco_captions is not None and g.include_captions:
+            coco_captions["images"].append(image_coco_ann)
 
         for label in ann.labels:
             if g.rectangle_mark in label.description:
@@ -152,8 +131,22 @@ def create_coco_annotation(
                     id=label_id,  # Each annotation also has an id (unique to all other annotations in the dataset)
                 )
             )
+        if coco_captions is not None and g.include_captions:
+            for tag in ann.img_tags:
+                if (
+                    tag.meta.name == "caption"
+                    and tag.meta.value_type == sly.TagValueType.ANY_STRING
+                ):
+                    caption_id += 1
+                    coco_captions["annotations"].append(
+                        dict(
+                            image_id=image_info.id,
+                            id=caption_id,
+                            caption=tag.value,
+                        )
+                    )
         progress.iter_done_report()
-    return coco_ann, label_id
+    return coco_ann, label_id, coco_captions, caption_id
 
 
 def upload_coco_project(full_archive_name, result_archive, app_logger):
@@ -187,3 +180,50 @@ def upload_coco_project(full_archive_name, result_archive, app_logger):
     g.api.task.set_output_archive(
         g.task_id, file_info.id, full_archive_name, file_url=file_info.storage_path
     )
+
+
+def create_coco_ann_templates(dataset, user_name, meta: sly.ProjectMeta):
+    coco_ann = dict(
+        info=dict(
+            description=dataset.description,
+            url="None",
+            version=str(1.0),
+            year=int(dataset.created_at[:4]),
+            contributor=user_name,
+            date_created=dataset.created_at,
+        ),
+        licenses=[dict(url="None", id=0, name="None")],
+        images=[
+            # license, url, file_name, height, width, date_captured, id
+        ],
+        # type="instances",
+        annotations=[
+            # segmentation, area, iscrowd, image_id, bbox, category_id, id
+        ],
+        categories=get_categories_from_meta(meta),  # supercategory, id, name
+    )
+
+    if not g.include_captions:
+        return coco_ann, None
+    captions_tag_meta = meta.get_tag_meta("caption")
+    if captions_tag_meta is None or captions_tag_meta.value_type != sly.TagValueType.ANY_STRING:
+        return coco_ann, None
+    coco_captions = dict(
+        info=dict(
+            description=dataset.description,
+            url="None",
+            version=str(1.0),
+            year=int(dataset.created_at[:4]),
+            contributor=user_name,
+            date_created=dataset.created_at,
+        ),
+        licenses=[dict(url="None", id=0, name="None")],
+        images=[
+            # license, url, file_name, height, width, date_captured, id
+        ],
+        # type="captions",
+        annotations=[
+            # image_id, id, caption
+        ],
+    )
+    return coco_ann, coco_captions

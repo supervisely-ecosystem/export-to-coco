@@ -58,5 +58,12 @@
         </el-radio-group>
       </div>
     </sly-field>
+    <sly-field
+        title="Export captions"
+        description="Specify whether its need to save caption annotations file">
+        <el-checkbox v-model="state.captions">include captions</el-checkbox>
+        <br>
+        <span v-if="!!state.captions" style="color: #777777">Create specific tag (name: "caption", value type: any_string) in project settings and assign to images with caption value</span>
+    </sly-field>
   </div>
 </div>

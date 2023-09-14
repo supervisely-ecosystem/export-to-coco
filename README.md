@@ -26,6 +26,9 @@ Application key points:
 
 - Supports **instances.json** from **COCO** format
 - Сonverts **Supervisely** polygons, rectangles, bitmaps to **COCO** polygons and bboxes.
+- Allow to export **captions** in COCO format
+
+  👉 To exprot captions you need to create `caption` tag to the project (with `any_string` value type) and assign it to images with caption values.
 - ⚠️ Сonverts annotations without preserving holes.
   
   👉 To preserve holes in polygons or export polylines it's best to use [Export to COCO mask](https://ecosystem.supervise.ly/apps/export-to-coco-mask)
