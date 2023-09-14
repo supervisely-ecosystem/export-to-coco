@@ -63,7 +63,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
             )
         with open(os.path.join(ann_dir, "instances.json"), "w") as file:
             json.dump(coco_instances, file)
-        if coco_captions is not None or not g.include_captions:
+        if coco_captions is not None and g.include_captions:
             with open(os.path.join(ann_dir, "captions.json"), "w") as file:
                 json.dump(coco_captions, file)
 
