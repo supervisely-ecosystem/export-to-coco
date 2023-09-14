@@ -18,13 +18,14 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
     else:
         datasets = [g.api.dataset.get_info_by_id(dataset_id) for dataset_id in g.selected_datasets]
     label_id = 0
+    caption_id = 0
 
     for dataset in datasets:
         sly.logger.info(f"Processing dataset [{dataset.name}] ...")
         coco_dataset_dir = os.path.join(g.coco_base_dir, dataset.name)
         img_dir, ann_dir = f.create_coco_dataset(coco_dataset_dir)
 
-        coco_ann = {}
+        coco_instances, coco_captions = f.create_coco_ann_templates(dataset, g.user_name, meta)
         images = api.image.get_list(dataset.id)
 
         if g.selected_filter == "annotated":
@@ -50,7 +51,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
                 ann = convert_geometry.convert_annotation(ann_info, img_info, g.meta, meta)
                 anns.append(ann)
 
-            coco_ann, label_id = f.create_coco_annotation(
+            coco_instances, label_id, coco_captions, caption_id = f.create_coco_annotation(
                 meta,
                 categories_mapping,
                 dataset,
@@ -58,11 +59,16 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
                 batch,
                 anns,
                 label_id,
-                coco_ann,
+                coco_instances,
+                caption_id,
+                coco_captions,
                 ds_progress,
             )
         with open(os.path.join(ann_dir, "instances.json"), "w") as file:
-            json.dump(coco_ann, file)
+            json.dump(coco_instances, file)
+        if coco_captions is not None:
+            with open(os.path.join(ann_dir, "captions.json"), "w") as file:
+                json.dump(coco_captions, file)
 
         sly.logger.info(f"Dataset [{dataset.name}] processed!")
 

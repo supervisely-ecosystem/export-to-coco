@@ -7,13 +7,20 @@ import numpy as np
 import cv2
 
 
-def prepare_meta(meta):
+def prepare_meta(meta: sly.ProjectMeta):
     new_classes = []
     for cls in meta.obj_classes:
         cls: sly.ObjClass
         new_classes.append(cls.clone(geometry_type=GET_GEOMETRY_FROM_STR("polygon")))
 
-    meta = meta.clone(obj_classes=sly.ObjClassCollection(new_classes))
+    new_tag_metas = []
+    captions_tag_meta = meta.get_tag_meta("caption")
+    if captions_tag_meta is not None:
+        is_applicable = captions_tag_meta.applicable_to != sly.TagApplicableTo.OBJECTS_ONLY
+        is_string_type = captions_tag_meta.value_type == sly.TagValueType.ANY_STRING
+        if is_applicable and is_string_type:
+            new_tag_metas = [captions_tag_meta.clone()]
+    meta = meta.clone(obj_classes=sly.ObjClassCollection(new_classes), tag_metas=new_tag_metas)
     return meta
 
 
@@ -44,4 +51,9 @@ def convert_annotation(ann_info, img_info, src_meta, dst_meta):
                 exc_info=False,
             )
             continue
-    return ann.clone(labels=new_labels)
+    new_tags = []
+    for tag in ann.img_tags:
+        tag_meta = dst_meta.get_tag_meta(tag.meta.name)
+        if tag_meta is not None:
+            new_tags.append(tag.clone(meta=tag_meta))
+    return ann.clone(labels=new_labels, img_tags=new_tags)
