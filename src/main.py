@@ -52,10 +52,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
                 anns.append(ann)
 
             coco_instances, label_id, coco_captions, caption_id = f.create_coco_annotation(
-                meta,
                 categories_mapping,
-                dataset,
-                g.user_name,
                 batch,
                 anns,
                 label_id,
@@ -66,7 +63,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
             )
         with open(os.path.join(ann_dir, "instances.json"), "w") as file:
             json.dump(coco_instances, file)
-        if coco_captions is not None:
+        if coco_captions is not None or not g.include_captions:
             with open(os.path.join(ann_dir, "captions.json"), "w") as file:
                 json.dump(coco_captions, file)
 

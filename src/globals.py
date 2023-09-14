@@ -17,6 +17,7 @@ selected_output = os.environ["modal.state.selectedOutput"]
 selected_filter = os.environ["modal.state.selectedFilter"]
 all_datasets = bool(strtobool(os.getenv("modal.state.allDatasets")))
 selected_datasets = ast.literal_eval(os.environ["modal.state.datasets"])
+include_captions = bool(strtobool(os.getenv("modal.state.captions")))
 
 task_id = os.environ["TASK_ID"]
 user_id = os.environ["context.userId"]

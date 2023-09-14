@@ -77,10 +77,7 @@ def create_coco_dataset(coco_dataset_dir):
 
 
 def create_coco_annotation(
-    meta,
     categories_mapping,
-    dataset,
-    user_name,
     image_infos,
     anns,
     label_id,
@@ -100,7 +97,7 @@ def create_coco_annotation(
             id=image_info.id,
         )
         coco_ann["images"].append(image_coco_ann)
-        if coco_captions is not None:
+        if coco_captions is not None and g.include_captions:
             coco_captions["images"].append(image_coco_ann)
 
         for label in ann.labels:
@@ -134,7 +131,7 @@ def create_coco_annotation(
                     id=label_id,  # Each annotation also has an id (unique to all other annotations in the dataset)
                 )
             )
-        if coco_captions is not None:
+        if coco_captions is not None and g.include_captions:
             for tag in ann.img_tags:
                 if (
                     tag.meta.name == "caption"
@@ -206,6 +203,8 @@ def create_coco_ann_templates(dataset, user_name, meta: sly.ProjectMeta):
         categories=get_categories_from_meta(meta),  # supercategory, id, name
     )
 
+    if not g.include_captions:
+        return coco_ann, None
     captions_tag_meta = meta.get_tag_meta("caption")
     if captions_tag_meta is None or captions_tag_meta.value_type != sly.TagValueType.ANY_STRING:
         return coco_ann, None
