@@ -228,29 +228,3 @@ def create_coco_ann_templates(dataset, user_name, meta: sly.ProjectMeta):
         ],
     )
     return coco_ann, coco_captions
-
-
-def tree(dir_path: str, file_limit) -> str:
-    out = subprocess.Popen(
-        ["tree", "--filelimit", f"{file_limit}", "-h", "-n", dir_path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    stdout, stderr = out.communicate()
-    return stdout.decode("utf-8")
-
-
-def log_tree(dir_path: str, logger, level, file_limit: int = 500):
-    out = tree(dir_path, file_limit)
-    log_levels = {
-        "info": logger.info,
-        "debug": logger.debug,
-        "warning": logger.warning,
-        "error": logger.error,
-    }
-    if level not in log_levels:
-        raise ValueError(
-            f"Unknown logger level: {level}. Available levels: info, debug, warning, error"
-        )
-    log_func = log_levels[level]
-    log_func("DIRECTORY_TREE", extra={"tree": out})
