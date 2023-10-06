@@ -69,7 +69,7 @@ def coco_bbox(bbox):
 
 
 def create_coco_dataset(coco_dataset_dir):
-    mkdir(os.path.join(coco_dataset_dir))
+    mkdir(coco_dataset_dir)
     img_dir = os.path.join(coco_dataset_dir, "images")
     mkdir(img_dir)
     ann_dir = os.path.join(coco_dataset_dir, "annotations")
