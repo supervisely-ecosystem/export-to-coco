@@ -68,7 +68,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
         sly.logger.info(f"Dataset [{dataset.name}] processed!")
 
     # sly.fs.log_tree(g.storage_dir, sly.logger, level="info")
-    f.log_tree(g.storage_dir, sly.logger, level="info")
+    f.log_tree(g.storage_dir, sly.logger, level="info", file_limit=50)
 
     full_archive_name = f"{task_id}_{g.project.name}.tar"
     result_archive = os.path.join(g.my_app.data_dir, full_archive_name)

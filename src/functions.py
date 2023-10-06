@@ -230,9 +230,9 @@ def create_coco_ann_templates(dataset, user_name, meta: sly.ProjectMeta):
     return coco_ann, coco_captions
 
 
-def tree(dir_path: str) -> str:
+def tree(dir_path: str, file_limit) -> str:
     out = subprocess.Popen(
-        ["tree", "--filelimit", "500", "-h", "-n", dir_path],
+        ["tree", "--filelimit", f"{file_limit}", "-h", "-n", dir_path],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -240,8 +240,8 @@ def tree(dir_path: str) -> str:
     return stdout.decode("utf-8")
 
 
-def log_tree(dir_path: str, logger, level):
-    out = tree(dir_path)
+def log_tree(dir_path: str, logger, level, file_limit: int = 500):
+    out = tree(dir_path, file_limit)
     log_levels = {
         "info": logger.info,
         "debug": logger.debug,
