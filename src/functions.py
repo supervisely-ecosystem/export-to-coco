@@ -154,6 +154,7 @@ def upload_coco_project(full_archive_name, result_archive, app_logger):
     sly.fs.archive_directory(g.storage_dir, result_archive)
 
     archive_size = sly.fs.get_file_size(result_archive) / (1024 * 1024)
+    archive_size = f"{archive_size:.2f} MB"
     sly.logger.info(f"Total archive size: {archive_size}")
 
     app_logger.info("Result directory is archived")
