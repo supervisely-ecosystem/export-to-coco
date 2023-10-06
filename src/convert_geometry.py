@@ -38,7 +38,7 @@ def convert_annotation(ann_info, img_info, src_meta, dst_meta):
             else:
                 converted_label = lbl.convert(new_cls)
                 if lbl.obj_class.geometry_type == polyline.Polyline:
-                    raise NotImplementedError
+                    raise NotImplementedError("Shape Polyline is not supported")
                 if lbl.obj_class.geometry_type == rectangle.Rectangle:
                     new_descr = converted_label[0].description + " " + rectangle_mark
                     new_label = converted_label[0].clone(description=new_descr)

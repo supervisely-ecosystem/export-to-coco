@@ -40,9 +40,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
             image_ids = [image_info.id for image_info in batch]
 
             if g.selected_output == "images":
-                image_paths = [
-                    os.path.join(coco_dataset_dir, img_dir, image_info.name) for image_info in batch
-                ]
+                image_paths = [os.path.join(img_dir, image_info.name) for image_info in batch]
                 api.image.download_paths(dataset.id, image_ids, image_paths)
 
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
@@ -68,6 +66,9 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
                 json.dump(coco_captions, file)
 
         sly.logger.info(f"Dataset [{dataset.name}] processed!")
+
+    tree_output = f.generate_file_tree("src/debug/app_debug_data/data/storage_dir", 30)
+    sly.logger.info(tree_output)
 
     full_archive_name = f"{task_id}_{g.project.name}.tar"
     result_archive = os.path.join(g.my_app.data_dir, full_archive_name)

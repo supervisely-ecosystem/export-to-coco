@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import supervisely as sly
+import subprocess
 
 from supervisely.io.fs import mkdir
 from itertools import groupby
@@ -227,3 +228,36 @@ def create_coco_ann_templates(dataset, user_name, meta: sly.ProjectMeta):
         ],
     )
     return coco_ann, coco_captions
+
+
+def generate_file_tree(directory_path, max_files_per_directory=5):
+    try:
+        result = subprocess.run(
+            ["tree", directory_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
+        tree_output = result.stdout
+        directory_file_count = {}
+        filtered_tree_output = []
+
+        lines = tree_output.split("\n")
+        for line in lines:
+            if line.startswith(directory_path):
+                current_directory = line
+                directory_file_count[current_directory] = 0
+                filtered_tree_output.append(line)
+            elif line.strip().startswith("├──") or line.strip().startswith("└──"):
+                if (
+                    current_directory
+                    and directory_file_count[current_directory] < max_files_per_directory
+                ):
+                    filtered_tree_output.append(line)
+                    directory_file_count[current_directory] += 1
+        return "\n".join(filtered_tree_output)
+
+    except subprocess.CalledProcessError as e:
+        print(f"Couldn't print file tree for this project. Error: {e}")
+        return None
