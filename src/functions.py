@@ -68,7 +68,7 @@ def coco_bbox(bbox):
 
 
 def create_coco_dataset(coco_dataset_dir):
-    mkdir(os.path.join(coco_dataset_dir))
+    mkdir(coco_dataset_dir)
     img_dir = os.path.join(coco_dataset_dir, "images")
     mkdir(img_dir)
     ann_dir = os.path.join(coco_dataset_dir, "annotations")
@@ -151,6 +151,11 @@ def create_coco_annotation(
 
 def upload_coco_project(full_archive_name, result_archive, app_logger):
     sly.fs.archive_directory(g.storage_dir, result_archive)
+
+    archive_size = sly.fs.get_file_size(result_archive) / (1024 * 1024)
+    archive_size = f"{archive_size:.2f} MB"
+    sly.logger.info(f"Total archive size: {archive_size}")
+
     app_logger.info("Result directory is archived")
 
     upload_progress = []
@@ -176,7 +181,7 @@ def upload_coco_project(full_archive_name, result_archive, app_logger):
         remote_archive_path,
         lambda m: _print_progress(m, upload_progress),
     )
-    app_logger.info("Uploaded to Team Files: {!r}".format(file_info.storage_path))
+    app_logger.info("Uploaded to Team Files: {!r}".format(file_info.path))
     g.api.task.set_output_archive(
         g.task_id, file_info.id, full_archive_name, file_url=file_info.storage_path
     )

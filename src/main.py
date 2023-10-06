@@ -40,9 +40,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
             image_ids = [image_info.id for image_info in batch]
 
             if g.selected_output == "images":
-                image_paths = [
-                    os.path.join(coco_dataset_dir, img_dir, image_info.name) for image_info in batch
-                ]
+                image_paths = [os.path.join(img_dir, image_info.name) for image_info in batch]
                 api.image.download_paths(dataset.id, image_ids, image_paths)
 
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
@@ -66,8 +64,20 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
         if coco_captions is not None and g.include_captions:
             with open(os.path.join(ann_dir, "captions.json"), "w") as file:
                 json.dump(coco_captions, file)
-
         sly.logger.info(f"Dataset [{dataset.name}] processed!")
+
+    total_files = len(sly.fs.list_files_recursively(g.storage_dir))
+    dir_size = sly.fs.get_directory_size(g.storage_dir) / (1024 * 1024)
+    dir_size = f"{dir_size:.2f} MB"
+
+    sly.logger.info(f"Total files: {total_files}")
+    sly.logger.info(f"Total images: {total_files-len(datasets)}")
+    sly.logger.info(f"Total directory size: {dir_size}")
+
+    # try:
+    #     sly.fs.log_tree(g.storage_dir, sly.logger, level="info")
+    # except Exception as e:
+    #     sly.logger.warn(f"Can not log storage tree. Error: {e}")
 
     full_archive_name = f"{task_id}_{g.project.name}.tar"
     result_archive = os.path.join(g.my_app.data_dir, full_archive_name)
