@@ -1,7 +1,7 @@
 import os
 import numpy as np
-import supervisely as sly
 import subprocess
+import supervisely as sly
 
 from supervisely.io.fs import mkdir
 from itertools import groupby
@@ -230,34 +230,27 @@ def create_coco_ann_templates(dataset, user_name, meta: sly.ProjectMeta):
     return coco_ann, coco_captions
 
 
-def generate_file_tree(directory_path, max_files_per_directory=5):
-    try:
-        result = subprocess.run(
-            ["tree", directory_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=True,
+def tree(dir_path: str) -> str:
+    out = subprocess.Popen(
+        ["tree", "--filelimit", "500", "-h", "-n", dir_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    stdout, stderr = out.communicate()
+    return stdout.decode("utf-8")
+
+
+def log_tree(dir_path: str, logger, level):
+    out = tree(dir_path)
+    log_levels = {
+        "info": logger.info,
+        "debug": logger.debug,
+        "warning": logger.warning,
+        "error": logger.error,
+    }
+    if level not in log_levels:
+        raise ValueError(
+            f"Unknown logger level: {level}. Available levels: info, debug, warning, error"
         )
-        tree_output = result.stdout
-        directory_file_count = {}
-        filtered_tree_output = []
-
-        lines = tree_output.split("\n")
-        for line in lines:
-            if line.startswith(directory_path):
-                current_directory = line
-                directory_file_count[current_directory] = 0
-                filtered_tree_output.append(line)
-            elif line.strip().startswith("├──") or line.strip().startswith("└──"):
-                if (
-                    current_directory
-                    and directory_file_count[current_directory] < max_files_per_directory
-                ):
-                    filtered_tree_output.append(line)
-                    directory_file_count[current_directory] += 1
-        return "\n".join(filtered_tree_output)
-
-    except subprocess.CalledProcessError as e:
-        print(f"Couldn't print file tree for this project. Error: {e}")
-        return None
+    log_func = log_levels[level]
+    log_func("DIRECTORY_TREE", extra={"tree": out})
