@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import subprocess
 import supervisely as sly
 
 from supervisely.io.fs import mkdir
