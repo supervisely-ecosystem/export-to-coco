@@ -85,6 +85,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
     g.my_app.stop()
 
 
+@sly.handle_exceptions
 def main():
     sly.logger.info(
         "Input arguments",
