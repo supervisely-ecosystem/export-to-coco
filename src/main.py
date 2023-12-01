@@ -41,7 +41,7 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
 
             if g.selected_output == "images":
                 image_paths = [os.path.join(img_dir, image_info.name) for image_info in batch]
-                api.image.download_paths(dataset.id, image_ids, image_paths)
+                f.download_batch_with_retry(api, dataset.id, image_ids, image_paths)
 
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
             anns = []

@@ -1,4 +1,5 @@
 import os
+import time
 import numpy as np
 import supervisely as sly
 
@@ -232,3 +233,28 @@ def create_coco_ann_templates(dataset, user_name, meta: sly.ProjectMeta):
         ],
     )
     return coco_ann, coco_captions
+
+
+def download_batch_with_retry(api: sly.Api, dataset_id, image_ids, paths_to_save):
+    retry_cnt = 5
+    curr_retry = 0
+    while curr_retry <= retry_cnt:
+        try:
+            image_nps = api.image.download_nps(dataset_id, image_ids)
+            if len(image_nps) != len(image_ids):
+                raise RuntimeError(
+                    f"Downloaded {len(image_nps)} images, but {len(image_ids)} expected."
+                )
+            for image_np, path in zip(image_nps, paths_to_save):
+                sly.image.write(path, image_np)
+            return
+        except Exception as e:
+            curr_retry += 1
+            if curr_retry <= retry_cnt:
+                time.sleep(2**curr_retry)
+                sly.logger.warn(
+                    f"Failed to download images, retry {curr_retry} of {retry_cnt}... Error: {e}"
+                )
+    raise RuntimeError(
+        f"Failed to download images with ids {image_ids}. Check your data and try again later."
+    )
