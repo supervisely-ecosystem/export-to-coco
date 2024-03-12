@@ -1,13 +1,11 @@
 import os
 import time
+from itertools import groupby
+
 import numpy as np
 import supervisely as sly
-
-from supervisely.io.fs import mkdir
-from itertools import groupby
 from supervisely.geometry import bitmap
-
-import globals as g
+from supervisely.io.fs import mkdir
 
 
 def get_categories_map_from_meta(meta):
@@ -86,6 +84,8 @@ def create_coco_annotation(
     caption_id,
     coco_captions,
     progress,
+    include_captions,
+    rectangle_mark,
 ):
     for image_info, ann in zip(image_infos, anns):
         image_coco_ann = dict(
@@ -98,11 +98,11 @@ def create_coco_annotation(
             id=image_info.id,
         )
         coco_ann["images"].append(image_coco_ann)
-        if coco_captions is not None and g.include_captions:
+        if coco_captions is not None and include_captions:
             coco_captions["images"].append(image_coco_ann)
 
         for label in ann.labels:
-            if g.rectangle_mark in label.description:
+            if rectangle_mark in label.description:
                 segmentation = []
             elif label.geometry.name() == bitmap.Bitmap.name():
                 segmentation = extend_mask_up_to_image(
@@ -122,7 +122,7 @@ def create_coco_annotation(
             coco_ann["annotations"].append(
                 dict(
                     segmentation=segmentation,  # a list of polygon vertices around the object, but can also be a run-length-encoded (RLE) bit mask
-                    area=label.geometry.area,  # Area is measured in pixels (e.g. a 10px by 20px box would have an area of 200)
+                    area=label.geometry.area,  # Area is measured in pixels (e. a 10px by 20px box would have an area of 200)
                     iscrowd=0,  # Is Crowd specifies whether the segmentation is for a single object or for a group/cluster of objects
                     image_id=image_info.id,  # The image id corresponds to a specific image in the dataset
                     bbox=bbox,  # he COCO bounding box format is [top left x position, top left y position, width, height]
@@ -132,7 +132,7 @@ def create_coco_annotation(
                     id=label_id,  # Each annotation also has an id (unique to all other annotations in the dataset)
                 )
             )
-        if coco_captions is not None and g.include_captions:
+        if coco_captions is not None and include_captions:
             for tag in ann.img_tags:
                 if (
                     tag.meta.name == "caption"
@@ -150,45 +150,45 @@ def create_coco_annotation(
     return coco_ann, label_id, coco_captions, caption_id
 
 
-def upload_coco_project(full_archive_name, result_archive, app_logger):
-    sly.fs.archive_directory(g.storage_dir, result_archive)
+# def upload_coco_project(full_archive_name, result_archive, app_logger):
+#     sly.fs.archive_directory(storage_dir, result_archive)
 
-    archive_size = sly.fs.get_file_size(result_archive) / (1024 * 1024)
-    archive_size = f"{archive_size:.2f} MB"
-    sly.logger.info(f"Total archive size: {archive_size}")
+#     archive_size = sly.fs.get_file_size(result_archive) / (1024 * 1024)
+#     archive_size = f"{archive_size:.2f} MB"
+#     sly.logger.info(f"Total archive size: {archive_size}")
 
-    app_logger.info("Result directory is archived")
+#     app_logger.info("Result directory is archived")
 
-    upload_progress = []
-    remote_archive_path = os.path.join(
-        sly.team_files.RECOMMENDED_EXPORT_PATH, f"export-to-COCO/{full_archive_name}"
-    )
+#     upload_progress = []
+#     remote_archive_path = os.path.join(
+#         sly.team_files.RECOMMENDED_EXPORT_PATH, f"export-to-COCO/{full_archive_name}"
+#     )
 
-    def _print_progress(monitor, upload_progress):
-        if len(upload_progress) == 0:
-            upload_progress.append(
-                sly.Progress(
-                    message="Upload {!r}".format(full_archive_name),
-                    total_cnt=monitor.len,
-                    ext_logger=app_logger,
-                    is_size=True,
-                )
-            )
-        upload_progress[0].set_current_value(monitor.bytes_read)
+#     def _print_progress(monitor, upload_progress):
+#         if len(upload_progress) == 0:
+#             upload_progress.append(
+#                 sly.Progress(
+#                     message="Upload {!r}".format(full_archive_name),
+#                     total_cnt=monitor.len,
+#                     ext_logger=app_logger,
+#                     is_size=True,
+#                 )
+#             )
+#         upload_progress[0].set_current_value(monitor.bytes_read)
 
-    file_info = g.api.file.upload(
-        g.team_id,
-        result_archive,
-        remote_archive_path,
-        lambda m: _print_progress(m, upload_progress),
-    )
-    app_logger.info("Uploaded to Team Files: {!r}".format(file_info.path))
-    g.api.task.set_output_archive(
-        g.task_id, file_info.id, full_archive_name, file_url=file_info.storage_path
-    )
+#     file_info = api.file.upload(
+#         team_id,
+#         result_archive,
+#         remote_archive_path,
+#         lambda m: _print_progress(m, upload_progress),
+#     )
+#     app_logger.info("Uploaded to Team Files: {!r}".format(file_info.path))
+#     api.task.set_output_archive(
+#         task_id, file_info.id, full_archive_name, file_url=file_info.storage_path
+#     )
 
 
-def create_coco_ann_templates(dataset, user_name, meta: sly.ProjectMeta):
+def create_coco_ann_templates(dataset, user_name, meta: sly.ProjectMeta, include_captions):
     coco_ann = dict(
         info=dict(
             description=dataset.description,
@@ -209,7 +209,7 @@ def create_coco_ann_templates(dataset, user_name, meta: sly.ProjectMeta):
         categories=get_categories_from_meta(meta),  # supercategory, id, name
     )
 
-    if not g.include_captions:
+    if not include_captions:
         return coco_ann, None
     captions_tag_meta = meta.get_tag_meta("caption")
     if captions_tag_meta is None or captions_tag_meta.value_type != sly.TagValueType.ANY_STRING:

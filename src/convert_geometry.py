@@ -1,10 +1,7 @@
 import supervisely as sly
 from supervisely.annotation.json_geometries_map import GET_GEOMETRY_FROM_STR
-from supervisely.geometry import rectangle, polyline, bitmap, image_rotator
-from globals import rectangle_mark
+from supervisely.geometry import polyline, rectangle
 from supervisely.sly_logger import logger
-import numpy as np
-import cv2
 
 
 def prepare_meta(meta: sly.ProjectMeta):
@@ -24,11 +21,12 @@ def prepare_meta(meta: sly.ProjectMeta):
     return meta
 
 
-def convert_annotation(ann_info, img_info, src_meta, dst_meta):
+def convert_annotation(ann_info, img_info, src_meta, dst_meta, rectangle_mark):
     try:
         ann = sly.Annotation.from_json(ann_info.annotation, src_meta)
-    except:
-        return sly.Annotation(img_info.height, img_info.width)
+    except Exception as e:
+        sly.logger.debug(f"Exception while creating sly.Annotation from JSON: {e}")
+        return sly.Annotation((img_info.height, img_info.width))
     new_labels = []
     for lbl in ann.labels:
         try:
@@ -45,7 +43,7 @@ def convert_annotation(ann_info, img_info, src_meta, dst_meta):
                     converted_label.pop()
                     converted_label.append(new_label)
                 new_labels.extend(converted_label)
-        except NotImplementedError as e:
+        except NotImplementedError:
             logger.warning(
                 f"Unsupported conversion of annotation '{lbl.obj_class.geometry_type.name()}' type to '{new_cls.geometry_type.name()}'. Skipping annotation with [ID: {lbl.to_json()['id']}]",
                 exc_info=False,
