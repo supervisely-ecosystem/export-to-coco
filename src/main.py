@@ -1,34 +1,75 @@
+import ast
 import json
 import os
+from distutils.util import strtobool
 
 import supervisely as sly
+from dotenv import load_dotenv
 
 import convert_geometry
 import functions as f
-import globals as g
+
+# region constants
+USER_NAME = "Supervisely"
+RECTANGLE_MARK = "converted_from_rectangle"
+STORAGE_DIR = os.path.join(os.getcwd(), "storage_dir")
+# endregion
+sly.fs.mkdir(STORAGE_DIR, remove_content_if_exists=True)
+
+if sly.is_development():
+    load_dotenv("local.env")
+    load_dotenv(os.path.expanduser("~/supervisely.env"))
+
+# region envvars
+team_id = sly.env.team_id()
+workspace_id = sly.env.workspace_id()
+project_id = sly.env.project_id()
+selected_output = os.environ["modal.state.selectedOutput"]
+selected_filter = os.environ["modal.state.selectedFilter"]
+all_datasets = bool(strtobool(os.getenv("modal.state.allDatasets")))
+selected_datasets = ast.literal_eval(os.environ["modal.state.datasets"])
+include_captions = bool(strtobool(os.getenv("modal.state.captions")))
+# endregion
+sly.logger.info(f"Team ID: {team_id}, Workspace ID: {workspace_id}, Project ID: {project_id}")
+sly.logger.info(
+    f"Selected output: {selected_output}, "
+    f"Selected filter: {selected_filter}, "
+    f"All datasets: {all_datasets}, "
+    f"Selected datasets: {selected_datasets}, "
+    f"Included captions: {include_captions}"
+)
 
 
-@g.my_app.callback("export_to_coco")
-@sly.timeit
-def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
-    meta = convert_geometry.prepare_meta(g.meta)
+def export_to_coco(api: sly.Api) -> None:
+    project = api.project.get_info_by_id(project_id)
+    project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
+    sly.logger.debug("Project meta retrieved...")
+
+    coco_base_dir = os.path.join(STORAGE_DIR, project.name)
+    sly.logger.debug(f"Data in COCO format will be saved to {coco_base_dir}.")
+
+    meta = convert_geometry.prepare_meta(project_meta)
     categories_mapping = f.get_categories_map_from_meta(meta)
-    if g.all_datasets:
-        datasets = list(api.dataset.get_list(g.project_id))
-    else:
-        datasets = [g.api.dataset.get_info_by_id(dataset_id) for dataset_id in g.selected_datasets]
+
+    datasets = api.dataset.get_list(project_id, recursive=True)
+    if not all_datasets:
+        datasets = [dataset for dataset in datasets if dataset.id in selected_datasets]
+
+    sly.logger.debug(f"Will be working with {len(datasets)} datasets.")
     label_id = 0
     caption_id = 0
 
     for dataset in datasets:
-        sly.logger.info(f"Processing dataset [{dataset.name}] ...")
-        coco_dataset_dir = os.path.join(g.coco_base_dir, dataset.name)
+        sly.logger.info(f"Processing dataset {dataset.name}...")
+        coco_dataset_dir = os.path.join(coco_base_dir, f"{dataset.id}_{dataset.name}")
         img_dir, ann_dir = f.create_coco_dataset(coco_dataset_dir)
 
-        coco_instances, coco_captions = f.create_coco_ann_templates(dataset, g.user_name, meta)
+        coco_instances, coco_captions = f.create_coco_ann_templates(
+            dataset, USER_NAME, meta, include_captions
+        )
         images = api.image.get_list(dataset.id)
 
-        if g.selected_filter == "annotated":
+        if selected_filter == "annotated":
             images = [image for image in images if image.labels_count > 0 or len(image.tags) > 0]
 
         ds_progress = sly.Progress(
@@ -39,14 +80,16 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
         for batch in sly.batched(images):
             image_ids = [image_info.id for image_info in batch]
 
-            if g.selected_output == "images":
+            if selected_output == "images":
                 image_paths = [os.path.join(img_dir, image_info.name) for image_info in batch]
                 f.download_batch_with_retry(api, dataset.id, image_ids, image_paths)
 
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
             anns = []
             for ann_info, img_info in zip(ann_infos, batch):
-                ann = convert_geometry.convert_annotation(ann_info, img_info, g.meta, meta)
+                ann = convert_geometry.convert_annotation(
+                    ann_info, img_info, meta, meta, RECTANGLE_MARK
+                )
                 anns.append(ann)
 
             coco_instances, label_id, coco_captions, caption_id = f.create_coco_annotation(
@@ -58,51 +101,27 @@ def export_to_coco(api: sly.Api, task_id, context, state, app_logger):
                 caption_id,
                 coco_captions,
                 ds_progress,
+                include_captions,
+                RECTANGLE_MARK,
             )
         with open(os.path.join(ann_dir, "instances.json"), "w") as file:
             json.dump(coco_instances, file)
-        if coco_captions is not None and g.include_captions:
+        if coco_captions is not None and include_captions:
             with open(os.path.join(ann_dir, "captions.json"), "w") as file:
                 json.dump(coco_captions, file)
         sly.logger.info(f"Dataset [{dataset.name}] processed!")
 
-    total_files = len(sly.fs.list_files_recursively(g.storage_dir))
-    dir_size = sly.fs.get_directory_size(g.storage_dir) / (1024 * 1024)
+    total_files = len(sly.fs.list_files_recursively(STORAGE_DIR))
+    dir_size = sly.fs.get_directory_size(STORAGE_DIR) / (1024 * 1024)
     dir_size = f"{dir_size:.2f} MB"
 
     sly.logger.info(f"Total files: {total_files}")
     sly.logger.info(f"Total images: {total_files-len(datasets)}")
     sly.logger.info(f"Total directory size: {dir_size}")
 
-    # try:
-    #     sly.fs.log_tree(g.storage_dir, sly.logger, level="info")
-    # except Exception as e:
-    #     sly.logger.warn(f"Can not log storage tree. Error: {e}")
-
-    full_archive_name = f"{task_id}_{g.project.name}.tar"
-    result_archive = os.path.join(g.my_app.data_dir, full_archive_name)
-    f.upload_coco_project(full_archive_name, result_archive, app_logger)
-    g.my_app.stop()
-
-
-def main():
-    sly.logger.info(
-        "Input arguments",
-        extra={
-            "TASK_ID": g.task_id,
-            "context.teamId": g.team_id,
-            "context.workspaceId": g.workspace_id,
-            "context.projectId": g.project_id,
-            "allDatasets": g.all_datasets,
-            "selectedDatasets": g.selected_datasets,
-            "selectedFilter": g.selected_filter,
-            "selectedOutput": g.selected_output,
-        },
-    )
-
-    # Run application service
-    g.my_app.run(initial_events=[{"command": "export_to_coco"}])
+    sly.output.set_download(coco_base_dir)
 
 
 if __name__ == "__main__":
-    main()
+    api = sly.Api.from_env()
+    export_to_coco(api)

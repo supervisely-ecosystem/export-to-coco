@@ -5,3 +5,5 @@ debug
 /src/debug
 secret_debug.env
 __pycache__
+.DS_Store
+storage_dir/
