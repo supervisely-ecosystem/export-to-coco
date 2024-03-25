@@ -79,6 +79,7 @@ def export_to_coco(api: sly.Api) -> None:
         )
         for batch in sly.batched(images):
             image_ids = [image_info.id for image_info in batch]
+            sly.logger.info(f"Working with batch of {len(batch)} images with ids: {image_ids}")
 
             if selected_output == "images":
                 image_paths = [os.path.join(img_dir, image_info.name) for image_info in batch]
@@ -86,12 +87,13 @@ def export_to_coco(api: sly.Api) -> None:
 
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
             anns = []
+            sly.logger.info(f"Preparing to convert {len(ann_infos)} annotations...")
             for ann_info, img_info in zip(ann_infos, batch):
                 ann = convert_geometry.convert_annotation(
-                    ann_info, img_info, meta, meta, RECTANGLE_MARK
+                    ann_info, img_info, project_meta, meta, RECTANGLE_MARK
                 )
                 anns.append(ann)
-
+            sly.logger.info(f"{len(anns)} annotations converted...")
             coco_instances, label_id, coco_captions, caption_id = f.create_coco_annotation(
                 categories_mapping,
                 batch,
@@ -116,7 +118,7 @@ def export_to_coco(api: sly.Api) -> None:
     dir_size = f"{dir_size:.2f} MB"
 
     sly.logger.info(f"Total files: {total_files}")
-    sly.logger.info(f"Total images: {total_files-len(datasets)}")
+    sly.logger.info(f"Total images: {total_files - len(datasets)}")
     sly.logger.info(f"Total directory size: {dir_size}")
 
     sly.output.set_download(coco_base_dir)
