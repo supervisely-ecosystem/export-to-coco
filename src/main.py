@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 import convert_geometry
 import functions as f
+import workflow as w
 
 # region constants
 USER_NAME = "Supervisely"
@@ -44,6 +45,8 @@ def export_to_coco(api: sly.Api) -> None:
     project = api.project.get_info_by_id(project_id)
     project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
     sly.logger.debug("Project meta retrieved...")
+
+    w.workflow_input(api, project.id)
 
     coco_base_dir = os.path.join(STORAGE_DIR, project.name)
     sly.logger.debug(f"Data in COCO format will be saved to {coco_base_dir}.")
@@ -121,7 +124,8 @@ def export_to_coco(api: sly.Api) -> None:
     sly.logger.info(f"Total images: {total_files - len(datasets)}")
     sly.logger.info(f"Total directory size: {dir_size}")
 
-    sly.output.set_download(coco_base_dir)
+    file_info = sly.output.set_download(coco_base_dir)
+    w.workflow_output(api, file_info)
 
 
 if __name__ == "__main__":
