@@ -87,7 +87,7 @@ def create_coco_annotation(
     include_captions,
     rectangle_mark,
 ):
-    for image_info, ann in zip(image_infos, anns):
+    for img_idx, (image_info, ann) in enumerate(zip(image_infos, anns)):
         image_coco_ann = dict(
             license="None",
             file_name=image_info.name,
@@ -95,7 +95,8 @@ def create_coco_annotation(
             height=image_info.height,
             width=image_info.width,
             date_captured=image_info.created_at,
-            id=image_info.id,
+            id=img_idx, # incremental id
+            sly_id=image_info.id # supervisely image id
         )
         coco_ann["images"].append(image_coco_ann)
         if coco_captions is not None and include_captions:
@@ -124,7 +125,7 @@ def create_coco_annotation(
                     segmentation=segmentation,  # a list of polygon vertices around the object, but can also be a run-length-encoded (RLE) bit mask
                     area=label.geometry.area,  # Area is measured in pixels (e. a 10px by 20px box would have an area of 200)
                     iscrowd=0,  # Is Crowd specifies whether the segmentation is for a single object or for a group/cluster of objects
-                    image_id=image_info.id,  # The image id corresponds to a specific image in the dataset
+                    image_id=img_idx,  # The image id corresponds to a specific image in the dataset
                     bbox=bbox,  # he COCO bounding box format is [top left x position, top left y position, width, height]
                     category_id=categories_mapping[
                         label.obj_class.name
