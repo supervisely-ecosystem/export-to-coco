@@ -87,7 +87,7 @@ def create_coco_annotation(
     include_captions,
     rectangle_mark,
 ):
-    for image_info, ann in zip(image_infos, anns):
+    for img_idx, (image_info, ann) in enumerate(zip(image_infos, anns)):
         image_coco_ann = dict(
             license="None",
             file_name=image_info.name,
@@ -95,7 +95,8 @@ def create_coco_annotation(
             height=image_info.height,
             width=image_info.width,
             date_captured=image_info.created_at,
-            id=image_info.id,
+            id=img_idx, # incremental id
+            sly_id=image_info.id # supervisely image id
         )
         coco_ann["images"].append(image_coco_ann)
         if coco_captions is not None and include_captions:
