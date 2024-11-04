@@ -88,6 +88,7 @@ def create_coco_annotation(
     include_captions,
     rectangle_mark,
 ):
+    global total_img_count
     for img_idx, (image_info, ann) in enumerate(zip(image_infos, anns)):
         image_coco_ann = dict(
             license="None",
