@@ -7,6 +7,7 @@ import supervisely as sly
 from supervisely.geometry import bitmap
 from supervisely.io.fs import mkdir
 
+total_img_count = 0
 
 def get_categories_map_from_meta(meta):
     obj_classes = meta.obj_classes
@@ -95,7 +96,7 @@ def create_coco_annotation(
             height=image_info.height,
             width=image_info.width,
             date_captured=image_info.created_at,
-            id=img_idx, # incremental id
+            id=img_idx + total_img_count, # incremental id
             sly_id=image_info.id # supervisely image id
         )
         coco_ann["images"].append(image_coco_ann)
@@ -148,6 +149,7 @@ def create_coco_annotation(
                         )
                     )
         progress.iter_done_report()
+    total_img_count += len(image_infos)
     return coco_ann, label_id, coco_captions, caption_id
 
 
