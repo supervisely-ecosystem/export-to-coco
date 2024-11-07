@@ -88,6 +88,7 @@ def create_coco_annotation(
     include_captions,
     rectangle_mark,
 ):
+
     global incremental_id
     for image_info, ann in zip(image_infos, anns):
         image_coco_ann = dict(
