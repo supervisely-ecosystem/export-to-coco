@@ -7,7 +7,7 @@ import supervisely as sly
 from supervisely.geometry import bitmap
 from supervisely.io.fs import mkdir
 
-total_img_count = 0
+incremental_id = 0
 
 def get_categories_map_from_meta(meta):
     obj_classes = meta.obj_classes
@@ -88,8 +88,8 @@ def create_coco_annotation(
     include_captions,
     rectangle_mark,
 ):
-    global total_img_count
-    for img_idx, (image_info, ann) in enumerate(zip(image_infos, anns)):
+    global incremental_id
+    for image_info, ann in zip(image_infos, anns):
         image_coco_ann = dict(
             license="None",
             file_name=image_info.name,
@@ -97,7 +97,7 @@ def create_coco_annotation(
             height=image_info.height,
             width=image_info.width,
             date_captured=image_info.created_at,
-            id=img_idx + total_img_count, # incremental id
+            id=incremental_id,
             sly_id=image_info.id # supervisely image id
         )
         coco_ann["images"].append(image_coco_ann)
@@ -127,7 +127,7 @@ def create_coco_annotation(
                     segmentation=segmentation,  # a list of polygon vertices around the object, but can also be a run-length-encoded (RLE) bit mask
                     area=label.geometry.area,  # Area is measured in pixels (e. a 10px by 20px box would have an area of 200)
                     iscrowd=0,  # Is Crowd specifies whether the segmentation is for a single object or for a group/cluster of objects
-                    image_id=img_idx,  # The image id corresponds to a specific image in the dataset
+                    image_id=incremental_id,  # The image id corresponds to a specific image in the dataset
                     bbox=bbox,  # he COCO bounding box format is [top left x position, top left y position, width, height]
                     category_id=categories_mapping[
                         label.obj_class.name
@@ -150,7 +150,7 @@ def create_coco_annotation(
                         )
                     )
         progress.iter_done_report()
-    total_img_count += len(image_infos)
+        incremental_id += 1
     return coco_ann, label_id, coco_captions, caption_id
 
 
