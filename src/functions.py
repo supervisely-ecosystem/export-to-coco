@@ -144,7 +144,7 @@ def create_coco_annotation(
                     caption_id += 1
                     coco_captions["annotations"].append(
                         dict(
-                            image_id=image_info.id,
+                            image_id=incremental_id,
                             id=caption_id,
                             caption=tag.value,
                         )
