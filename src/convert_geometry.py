@@ -3,6 +3,7 @@ from supervisely.annotation.json_geometries_map import GET_GEOMETRY_FROM_STR
 from supervisely import Bitmap, Polyline, Rectangle
 from supervisely.sly_logger import logger
 from typing import List
+import uuid
 
 def prepare_meta(meta: sly.ProjectMeta):
     new_classes = []
@@ -22,16 +23,16 @@ def prepare_meta(meta: sly.ProjectMeta):
 
 
 def convert_w_binding_key(
-    label: sly.Label, new_obj_class: sly.ObjClass, binding_key=None
+    label: sly.Label, new_obj_class: sly.ObjClass, binding_key: str
 ) -> List[sly.Label]:
     """
     Convert geometries with a binding key (used only for bitmap labels for further grouping)
     """
-    labels = []
-    geometries = label.geometry.convert(new_obj_class.geometry_type)
-    for g in geometries:
-        labels.append(label.clone(geometry=g, obj_class=new_obj_class, binding_key=binding_key))
-    return labels
+
+    if binding_key is None and label.geometry.name() == sly.Bitmap.name():
+        binding_key = uuid.uuid4().hex
+
+    return [label.clone(binding_key=binding_key) for label in label.convert(new_obj_class)]
 
 
 def convert_annotation(ann_info, img_info, src_meta, dst_meta, rectangle_mark):
@@ -42,15 +43,12 @@ def convert_annotation(ann_info, img_info, src_meta, dst_meta, rectangle_mark):
         return sly.Annotation((img_info.height, img_info.width))
     new_labels = []
 
-    for idx, label in enumerate(ann.labels):
+    for binding_key, label in ann.get_bindings():
         try:
             new_cls = dst_meta.obj_classes.get(label.obj_class.name)
             if label.obj_class.geometry_type == new_cls.geometry_type:
                 new_labels.append(label)
             else:
-                binding_key = None
-                if label.obj_class.geometry_type == Bitmap:
-                    binding_key = f"{label.obj_class.name}_label_{idx}"
                 converted_label = convert_w_binding_key(label, new_cls, binding_key)
                 if label.obj_class.geometry_type == Polyline:
                     raise NotImplementedError("Shape Polyline is not supported")

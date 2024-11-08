@@ -102,8 +102,9 @@ def create_coco_annotation(
     rectangle_mark,
 ):
     global incremental_id
-    incremental_id += 1
     for image_info, ann in zip(image_infos, anns):
+        incremental_id += 1
+
         image_coco_ann = dict(
             license="None",
             file_name=image_info.name,
