@@ -1,8 +1,8 @@
 import supervisely as sly
 from supervisely.annotation.json_geometries_map import GET_GEOMETRY_FROM_STR
-from supervisely.geometry import polyline, rectangle
+from supervisely.geometry import polyline, rectangle, bitmap
 from supervisely.sly_logger import logger
-
+from typing import List
 
 def prepare_meta(meta: sly.ProjectMeta):
     new_classes = []
@@ -21,6 +21,14 @@ def prepare_meta(meta: sly.ProjectMeta):
     return meta
 
 
+def convert_w_binding_key(label, new_obj_class: sly.ObjClass, binding_key=None) -> List:
+    labels = []
+    geometries = label.geometry.convert(new_obj_class.geometry_type)
+    for g in geometries:
+        labels.append(label.clone(geometry=g, obj_class=new_obj_class, binding_key=binding_key))
+    return labels
+
+
 def convert_annotation(ann_info, img_info, src_meta, dst_meta, rectangle_mark):
     try:
         ann = sly.Annotation.from_json(ann_info.annotation, src_meta)
@@ -28,16 +36,20 @@ def convert_annotation(ann_info, img_info, src_meta, dst_meta, rectangle_mark):
         sly.logger.debug(f"Exception while creating sly.Annotation from JSON: {e}")
         return sly.Annotation((img_info.height, img_info.width))
     new_labels = []
-    for lbl in ann.labels:
+
+    for idx, label in enumerate(ann.labels):
         try:
-            new_cls = dst_meta.obj_classes.get(lbl.obj_class.name)
-            if lbl.obj_class.geometry_type == new_cls.geometry_type:
-                new_labels.append(lbl)
+            new_cls = dst_meta.obj_classes.get(label.obj_class.name)
+            if label.obj_class.geometry_type == new_cls.geometry_type:
+                new_labels.append(label)
             else:
-                converted_label = lbl.convert(new_cls)
-                if lbl.obj_class.geometry_type == polyline.Polyline:
+                binding_key = None
+                if label.obj_class.geometry_type == bitmap.Bitmap:
+                    binding_key = f"{label.obj_class.name}_label_{idx}"
+                converted_label = convert_w_binding_key(label, new_cls, binding_key)
+                if label.obj_class.geometry_type == polyline.Polyline:
                     raise NotImplementedError("Shape Polyline is not supported")
-                if lbl.obj_class.geometry_type == rectangle.Rectangle:
+                if label.obj_class.geometry_type == rectangle.Rectangle:
                     new_descr = converted_label[0].description + " " + rectangle_mark
                     new_label = converted_label[0].clone(description=new_descr)
                     converted_label.pop()
@@ -45,7 +57,7 @@ def convert_annotation(ann_info, img_info, src_meta, dst_meta, rectangle_mark):
                 new_labels.extend(converted_label)
         except NotImplementedError:
             logger.warning(
-                f"Unsupported conversion of annotation '{lbl.obj_class.geometry_type.name()}' type to '{new_cls.geometry_type.name()}'. Skipping annotation with [ID: {lbl.to_json()['id']}]",
+                f"Unsupported conversion of annotation '{label.obj_class.geometry_type.name()}' type to '{new_cls.geometry_type.name()}'. Skipping annotation with [ID: {label.to_json()['id']}]",
                 exc_info=False,
             )
             continue
