@@ -1,6 +1,6 @@
 import supervisely as sly
 from supervisely.annotation.json_geometries_map import GET_GEOMETRY_FROM_STR
-from supervisely.geometry import polyline, rectangle, bitmap
+from supervisely import Bitmap, Polyline, Rectangle
 from supervisely.sly_logger import logger
 from typing import List
 
@@ -21,7 +21,12 @@ def prepare_meta(meta: sly.ProjectMeta):
     return meta
 
 
-def convert_w_binding_key(label, new_obj_class: sly.ObjClass, binding_key=None) -> List:
+def convert_w_binding_key(
+    label: sly.Label, new_obj_class: sly.ObjClass, binding_key=None
+) -> List[sly.Label]:
+    """
+    Convert geometries with a binding key (used only for bitmap labels for further grouping)
+    """
     labels = []
     geometries = label.geometry.convert(new_obj_class.geometry_type)
     for g in geometries:
@@ -44,12 +49,12 @@ def convert_annotation(ann_info, img_info, src_meta, dst_meta, rectangle_mark):
                 new_labels.append(label)
             else:
                 binding_key = None
-                if label.obj_class.geometry_type == bitmap.Bitmap:
+                if label.obj_class.geometry_type == Bitmap:
                     binding_key = f"{label.obj_class.name}_label_{idx}"
                 converted_label = convert_w_binding_key(label, new_cls, binding_key)
-                if label.obj_class.geometry_type == polyline.Polyline:
+                if label.obj_class.geometry_type == Polyline:
                     raise NotImplementedError("Shape Polyline is not supported")
-                if label.obj_class.geometry_type == rectangle.Rectangle:
+                if label.obj_class.geometry_type == Rectangle:
                     new_descr = converted_label[0].description + " " + rectangle_mark
                     new_label = converted_label[0].clone(description=new_descr)
                     converted_label.pop()

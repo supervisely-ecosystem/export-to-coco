@@ -4,9 +4,9 @@ from itertools import groupby
 
 import numpy as np
 import supervisely as sly
-from supervisely.geometry import bitmap
+# from supervisely.geometry import bitmap
 from supervisely.io.fs import mkdir
-from typing import List, Union
+from typing import List
 
 incremental_id = 0
 
