@@ -157,6 +157,9 @@ def create_coco_annotation(
                     #         label.geometry.origin,
                     #     )
                     #     segmentation = coco_segmentation_rle(segmentation)
+                    else:
+                        segmentation = label.geometry.to_json()["points"]["exterior"]
+                        segmentation = [coco_segmentation(segmentation)]
 
                     bbox = label.geometry.to_bbox().to_json()["points"]["exterior"]
                     bbox = coco_bbox(bbox)
@@ -175,21 +178,22 @@ def create_coco_annotation(
                             id=label_id,  # Each annotation also has an id (unique to all other annotations in the dataset)
                         )
                     )
-            if coco_captions is not None and include_captions:
-                for tag in ann.img_tags:
-                    if (
-                        tag.meta.name == "caption"
-                        and tag.meta.value_type == sly.TagValueType.ANY_STRING
-                    ):
-                        caption_id += 1
-                        coco_captions["annotations"].append(
-                            dict(
-                                image_id=incremental_id,
-                                id=caption_id,
-                                caption=tag.value,
-                            )
+        if coco_captions is not None and include_captions:
+            for tag in ann.img_tags:
+                if (
+                    tag.meta.name == "caption"
+                    and tag.meta.value_type == sly.TagValueType.ANY_STRING
+                ):
+                    caption_id += 1
+                    coco_captions["annotations"].append(
+                        dict(
+                            image_id=incremental_id,
+                            id=caption_id,
+                            caption=tag.value,
                         )
-            progress.iter_done_report()
+                    )
+        progress.iter_done_report()
+
     return coco_ann, label_id, coco_captions, caption_id
 
 
