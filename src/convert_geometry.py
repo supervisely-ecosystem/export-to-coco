@@ -43,27 +43,28 @@ def convert_annotation(ann_info, img_info, src_meta, dst_meta, rectangle_mark):
         return sly.Annotation((img_info.height, img_info.width))
     new_labels = []
 
-    for binding_key, label in ann.get_bindings():
-        try:
-            new_cls = dst_meta.obj_classes.get(label.obj_class.name)
-            if label.obj_class.geometry_type == new_cls.geometry_type:
-                new_labels.append(label)
-            else:
-                converted_label = convert_w_binding_key(label, new_cls, binding_key)
-                if label.obj_class.geometry_type == Polyline:
-                    raise NotImplementedError("Shape Polyline is not supported")
-                if label.obj_class.geometry_type == Rectangle:
-                    new_descr = converted_label[0].description + " " + rectangle_mark
-                    new_label = converted_label[0].clone(description=new_descr)
-                    converted_label.pop()
-                    converted_label.append(new_label)
-                new_labels.extend(converted_label)
-        except NotImplementedError:
-            logger.warning(
-                f"Unsupported conversion of annotation '{label.obj_class.geometry_type.name()}' type to '{new_cls.geometry_type.name()}'. Skipping annotation with [ID: {label.to_json()['id']}]",
-                exc_info=False,
-            )
-            continue
+    for binding_key, labels in ann.get_bindings():
+        for label in labels:
+            try:
+                new_cls = dst_meta.obj_classes.get(label.obj_class.name)
+                if label.obj_class.geometry_type == new_cls.geometry_type:
+                    new_labels.append(label)
+                else:
+                    converted_label = convert_w_binding_key(label, new_cls, binding_key)
+                    if label.obj_class.geometry_type == Polyline:
+                        raise NotImplementedError("Shape Polyline is not supported")
+                    if label.obj_class.geometry_type == Rectangle:
+                        new_descr = converted_label[0].description + " " + rectangle_mark
+                        new_label = converted_label[0].clone(description=new_descr)
+                        converted_label.pop()
+                        converted_label.append(new_label)
+                    new_labels.extend(converted_label)
+            except NotImplementedError:
+                logger.warning(
+                    f"Unsupported conversion of annotation '{label.obj_class.geometry_type.name()}' type to '{new_cls.geometry_type.name()}'. Skipping annotation with [ID: {label.to_json()['id']}]",
+                    exc_info=False,
+                )
+                continue
     new_tags = []
     for tag in ann.img_tags:
         tag_meta = dst_meta.get_tag_meta(tag.meta.name)
