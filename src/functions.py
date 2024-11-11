@@ -77,7 +77,7 @@ def create_coco_dataset(coco_dataset_dir):
     return img_dir, ann_dir
 
 
-def get_bbox_labels(bbox_points: List[List[int, int]]) -> List[List[int, int]]:
+def get_bbox_labels(bbox_points: List[List[int]]) -> List[List[int]]:
     """
     A helper function to convert list of bbox points into a bbox which contains them all
     """
@@ -120,7 +120,6 @@ def create_coco_annotation(
             coco_captions["images"].append(image_coco_ann)
 
         groups = ann.get_bindings()
-
         for binding_key, labels in groups.items():
             labels: List[sly.Label]
             if binding_key is not None:  # -> converted bitmap labels

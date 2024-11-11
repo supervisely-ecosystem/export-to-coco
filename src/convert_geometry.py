@@ -43,7 +43,8 @@ def convert_annotation(ann_info, img_info, src_meta, dst_meta, rectangle_mark):
         return sly.Annotation((img_info.height, img_info.width))
     new_labels = []
 
-    for binding_key, labels in ann.get_bindings():
+    groups = ann.get_bindings()
+    for binding_key, labels in groups.items():
         for label in labels:
             try:
                 new_cls = dst_meta.obj_classes.get(label.obj_class.name)
