@@ -4,8 +4,9 @@ from itertools import groupby
 
 import numpy as np
 import supervisely as sly
-from supervisely.geometry import bitmap
+# from supervisely.geometry import bitmap
 from supervisely.io.fs import mkdir
+from typing import List
 
 incremental_id = 0
 
@@ -76,6 +77,18 @@ def create_coco_dataset(coco_dataset_dir):
     return img_dir, ann_dir
 
 
+def get_bbox_labels(bbox_points: List[List[int]]) -> List[List[int]]:
+    """
+    A helper function to convert list of bbox points into a bbox which contains them all
+    """
+    min_x = min(bbox[0][0] for bbox in bbox_points)
+    min_y = min(bbox[0][1] for bbox in bbox_points)
+    max_x = max(bbox[1][0] for bbox in bbox_points)
+    max_y = max(bbox[1][1] for bbox in bbox_points)
+
+    return [[min_x, min_y], [max_x, max_y]]
+
+
 def create_coco_annotation(
     categories_mapping,
     image_infos,
@@ -90,6 +103,8 @@ def create_coco_annotation(
 ):
     global incremental_id
     for image_info, ann in zip(image_infos, anns):
+        incremental_id += 1
+
         image_coco_ann = dict(
             license="None",
             file_name=image_info.name,
@@ -104,37 +119,64 @@ def create_coco_annotation(
         if coco_captions is not None and include_captions:
             coco_captions["images"].append(image_coco_ann)
 
-        for label in ann.labels:
-            if rectangle_mark in label.description:
-                segmentation = []
-            elif label.geometry.name() == bitmap.Bitmap.name():
-                segmentation = extend_mask_up_to_image(
-                    label.geometry.data,
-                    (image_info.height, image_info.width),
-                    label.geometry.origin,
+        groups = ann.get_bindings()
+        for binding_key, labels in groups.items():
+            labels: List[sly.Label]
+            if binding_key is not None:  # -> converted bitmap labels
+                to_segm = lambda x: x.geometry.to_json()["points"]["exterior"]
+                segmentation = [coco_segmentation(to_segm(label)) for label in labels]
+                bbox_points = [l.geometry.to_bbox().to_json()["points"]["exterior"] for l in labels]
+                bbox = coco_bbox(get_bbox_labels(bbox_points))
+                label_id += 1
+                coco_ann["annotations"].append(
+                    dict(
+                        segmentation=segmentation,  # a list of polygon vertices around the object, but can also be a run-length-encoded (RLE) bit mask
+                        area=sum(
+                            [label.area for label in labels]
+                        ),  # Area is measured in pixels (e. a 10px by 20px box would have an area of 200)
+                        iscrowd=0,  # Is Crowd specifies whether the segmentation is for a single object or for a group/cluster of objects
+                        image_id=incremental_id,  # The image id corresponds to a specific image in the dataset
+                        bbox=bbox,  # he COCO bounding box format is [top left x position, top left y position, width, height]
+                        category_id=categories_mapping[
+                            labels[0].obj_class.name
+                        ],  # The category id corresponds to a single category specified in the categories section
+                        id=label_id,  # Each annotation also has an id (unique to all other annotations in the dataset)
+                    )
                 )
-                segmentation = coco_segmentation_rle(segmentation)
-            else:
-                segmentation = label.geometry.to_json()["points"]["exterior"]
-                segmentation = [coco_segmentation(segmentation)]
+            else:  # -> other labels such as rectangles and polygons
+                for label in labels:
+                    if rectangle_mark in label.description:
+                        segmentation = []
+                    # elif (
+                    #     label.geometry.name() == bitmap.Bitmap.name()
+                    # ):  # There are no bitmap labels, as they are converted into polygons in advance? Most likely redundant code
+                    #     segmentation = extend_mask_up_to_image(
+                    #         label.geometry.data,
+                    #         (image_info.height, image_info.width),
+                    #         label.geometry.origin,
+                    #     )
+                    #     segmentation = coco_segmentation_rle(segmentation)
+                    else:
+                        segmentation = label.geometry.to_json()["points"]["exterior"]
+                        segmentation = [coco_segmentation(segmentation)]
 
-            bbox = label.geometry.to_bbox().to_json()["points"]["exterior"]
-            bbox = coco_bbox(bbox)
+                    bbox = label.geometry.to_bbox().to_json()["points"]["exterior"]
+                    bbox = coco_bbox(bbox)
 
-            label_id += 1
-            coco_ann["annotations"].append(
-                dict(
-                    segmentation=segmentation,  # a list of polygon vertices around the object, but can also be a run-length-encoded (RLE) bit mask
-                    area=label.geometry.area,  # Area is measured in pixels (e. a 10px by 20px box would have an area of 200)
-                    iscrowd=0,  # Is Crowd specifies whether the segmentation is for a single object or for a group/cluster of objects
-                    image_id=incremental_id,  # The image id corresponds to a specific image in the dataset
-                    bbox=bbox,  # he COCO bounding box format is [top left x position, top left y position, width, height]
-                    category_id=categories_mapping[
-                        label.obj_class.name
-                    ],  # The category id corresponds to a single category specified in the categories section
-                    id=label_id,  # Each annotation also has an id (unique to all other annotations in the dataset)
-                )
-            )
+                    label_id += 1
+                    coco_ann["annotations"].append(
+                        dict(
+                            segmentation=segmentation,  # a list of polygon vertices around the object, but can also be a run-length-encoded (RLE) bit mask
+                            area=label.geometry.area,  # Area is measured in pixels (e. a 10px by 20px box would have an area of 200)
+                            iscrowd=0,  # Is Crowd specifies whether the segmentation is for a single object or for a group/cluster of objects
+                            image_id=incremental_id,  # The image id corresponds to a specific image in the dataset
+                            bbox=bbox,  # he COCO bounding box format is [top left x position, top left y position, width, height]
+                            category_id=categories_mapping[
+                                label.obj_class.name
+                            ],  # The category id corresponds to a single category specified in the categories section
+                            id=label_id,  # Each annotation also has an id (unique to all other annotations in the dataset)
+                        )
+                    )
         if coco_captions is not None and include_captions:
             for tag in ann.img_tags:
                 if (
@@ -150,7 +192,7 @@ def create_coco_annotation(
                         )
                     )
         progress.iter_done_report()
-        incremental_id += 1
+
     return coco_ann, label_id, coco_captions, caption_id
 
 
