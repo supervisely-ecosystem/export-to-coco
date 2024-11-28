@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import convert_geometry
 import functions as f
 import workflow as w
+from tinytimer import Timer
 
 # region constants
 USER_NAME = "Supervisely"
@@ -82,7 +83,7 @@ def export_to_coco(api: sly.Api) -> None:
             min_report_percent=5,
         )
 
-        dataset_path = os.path.join(img_dir, project.name, dataset.name)
+        dataset_path = os.path.join(coco_dataset_dir, project.name, dataset.name)
         os.makedirs(dataset_path, exist_ok=True)
 
         if selected_output == "images":
@@ -93,15 +94,18 @@ def export_to_coco(api: sly.Api) -> None:
             else:
                 semaphore = None
             # api._get_default_semaphore()
-            coro = api.image.download_paths_async(
-                image_ids, paths, semaphore, progress_cb=ds_progress.iters_done_report
+
+            with Timer() as t:
+                coro = api.image.download_paths_async(image_ids, paths, semaphore)
+                loop = sly.utils.get_or_create_event_loop()
+                if loop.is_running():
+                    future = asyncio.run_coroutine_threadsafe(coro, loop)
+                    future.result()
+                else:
+                    loop.run_until_complete(coro)
+            sly.logger.info(
+                f"Downloading time: {t.elapsed:.4f} seconds per {len(image_ids)} images  ({t.elapsed/len(image_ids):.4f} seconds per image)"
             )
-            loop = sly.utils.get_or_create_event_loop()
-            if loop.is_running():
-                future = asyncio.run_coroutine_threadsafe(coro, loop)
-                future.result()
-            else:
-                loop.run_until_complete(coro)
 
         for batch in sly.batched(images):
             batch_ids = [image_info.id for image_info in batch]
@@ -133,7 +137,11 @@ def export_to_coco(api: sly.Api) -> None:
 
         #     if selected_output == "images":
         #         image_paths = [os.path.join(img_dir, image_info.name) for image_info in batch]
-        #         f.download_batch_with_retry(api, dataset.id, image_ids, image_paths)
+        #         with Timer() as t:
+        #             f.download_batch_with_retry(api, dataset.id, image_ids, image_paths)
+        #         sly.logger.info(
+        #             f"Downloading time: {t.elapsed:.4f} seconds per {len(image_ids)} images  ({t.elapsed/len(image_ids):.4f} seconds per image)"
+        #         )
 
         #     ann_infos = api.annotation.download_batch(dataset.id, image_ids)
         #     anns = []
