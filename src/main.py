@@ -96,63 +96,29 @@ def export_to_coco(api: sly.Api) -> None:
         dataset_path = os.path.join(coco_dataset_dir, project.name, dataset.name)
         os.makedirs(dataset_path, exist_ok=True)
 
-        if selected_output == "images":
-            image_ids = [image_info.id for image_info in images]
-            paths = [os.path.join(dataset_path, image_info.name) for image_info in images]
-            if api.server_address.startswith("https://"):
-                semaphore = asyncio.Semaphore(10)
-            else:
-                semaphore = None
+        # if selected_output == "images":
+        #     image_ids = [image_info.id for image_info in images]
+        #     paths = [os.path.join(dataset_path, image_info.name) for image_info in images]
+        #     if api.server_address.startswith("https://"):
+        #         semaphore = asyncio.Semaphore(10)
+        #     else:
+        #         semaphore = None
 
-            with Timer() as t:
-                coro = api.image.download_paths_async(image_ids, paths, semaphore)
-                loop = sly.utils.get_or_create_event_loop()
-                if loop.is_running():
-                    future = asyncio.run_coroutine_threadsafe(coro, loop)
-                    future.result()
-                else:
-                    loop.run_until_complete(coro)
-            sly.logger.info(
-                f"Downloading time: {t.elapsed:.4f} seconds per {len(image_ids)} images  ({t.elapsed/len(image_ids):.4f} seconds per image)"
-            )
-
-        for batch in sly.batched(images):
-            batch_ids = [image_info.id for image_info in batch]
-            ann_infos = api.annotation.download_batch(dataset.id, batch_ids)
-            anns = []
-            sly.logger.info(f"Preparing to convert {len(ann_infos)} annotations...")
-            for ann_info, img_info in zip(ann_infos, batch):
-                ann = convert_geometry.convert_annotation(
-                    ann_info, img_info, project_meta, meta, RECTANGLE_MARK
-                )
-                anns.append(ann)
-            sly.logger.info(f"{len(anns)} annotations converted...")
-            coco_instances, label_id, coco_captions, caption_id = f.create_coco_annotation(
-                categories_mapping,
-                batch,
-                anns,
-                label_id,
-                coco_instances,
-                caption_id,
-                coco_captions,
-                ds_progress,
-                include_captions,
-                RECTANGLE_MARK,
-            )
+        #     with Timer() as t:
+        #         coro = api.image.download_paths_async(image_ids, paths, semaphore)
+        #         loop = sly.utils.get_or_create_event_loop()
+        #         if loop.is_running():
+        #             future = asyncio.run_coroutine_threadsafe(coro, loop)
+        #             future.result()
+        #         else:
+        #             loop.run_until_complete(coro)
+        #     sly.logger.info(
+        #         f"Downloading time: {t.elapsed:.4f} seconds per {len(image_ids)} images  ({t.elapsed/len(image_ids):.4f} seconds per image)"
+        #     )
 
         # for batch in sly.batched(images):
-        #     image_ids = [image_info.id for image_info in batch]
-        #     sly.logger.info(f"Working with batch of {len(batch)} images with ids: {image_ids}")
-
-        #     if selected_output == "images":
-        #         image_paths = [os.path.join(img_dir, image_info.name) for image_info in batch]
-        #         with Timer() as t:
-        #             f.download_batch_with_retry(api, dataset.id, image_ids, image_paths)
-        #         sly.logger.info(
-        #             f"Downloading time: {t.elapsed:.4f} seconds per {len(image_ids)} images  ({t.elapsed/len(image_ids):.4f} seconds per image)"
-        #         )
-
-        #     ann_infos = api.annotation.download_batch(dataset.id, image_ids)
+        #     batch_ids = [image_info.id for image_info in batch]
+        #     ann_infos = api.annotation.download_batch(dataset.id, batch_ids)
         #     anns = []
         #     sly.logger.info(f"Preparing to convert {len(ann_infos)} annotations...")
         #     for ann_info, img_info in zip(ann_infos, batch):
@@ -173,6 +139,40 @@ def export_to_coco(api: sly.Api) -> None:
         #         include_captions,
         #         RECTANGLE_MARK,
         #     )
+
+        for batch in sly.batched(images):
+            image_ids = [image_info.id for image_info in batch]
+            sly.logger.info(f"Working with batch of {len(batch)} images with ids: {image_ids}")
+
+            if selected_output == "images":
+                image_paths = [os.path.join(img_dir, image_info.name) for image_info in batch]
+                with Timer() as t:
+                    f.download_batch_with_retry(api, dataset.id, image_ids, image_paths)
+                sly.logger.info(
+                    f"Downloading time: {t.elapsed:.4f} seconds per {len(image_ids)} images  ({t.elapsed/len(image_ids):.4f} seconds per image)"
+                )
+
+            ann_infos = api.annotation.download_batch(dataset.id, image_ids)
+            anns = []
+            sly.logger.info(f"Preparing to convert {len(ann_infos)} annotations...")
+            for ann_info, img_info in zip(ann_infos, batch):
+                ann = convert_geometry.convert_annotation(
+                    ann_info, img_info, project_meta, meta, RECTANGLE_MARK
+                )
+                anns.append(ann)
+            sly.logger.info(f"{len(anns)} annotations converted...")
+            coco_instances, label_id, coco_captions, caption_id = f.create_coco_annotation(
+                categories_mapping,
+                batch,
+                anns,
+                label_id,
+                coco_instances,
+                caption_id,
+                coco_captions,
+                ds_progress,
+                include_captions,
+                RECTANGLE_MARK,
+            )
         with open(os.path.join(ann_dir, "instances.json"), "w") as file:
             json.dump(coco_instances, file)
         if coco_captions is not None and include_captions:
