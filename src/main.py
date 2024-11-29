@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import convert_geometry
 import functions as f
 import workflow as w
-from tinytimer import Timer
+import time
 
 # region constants
 USER_NAME = "Supervisely"
@@ -41,6 +41,16 @@ sly.logger.info(
     f"Selected datasets: {selected_datasets}, "
     f"Included captions: {include_captions}"
 )
+
+
+class Timer:
+    def __enter__(self):
+        self.start = time.perf_counter()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end = time.perf_counter()
+        self.elapsed = self.end - self.start
 
 
 def export_to_coco(api: sly.Api) -> None:
@@ -90,10 +100,9 @@ def export_to_coco(api: sly.Api) -> None:
             image_ids = [image_info.id for image_info in images]
             paths = [os.path.join(dataset_path, image_info.name) for image_info in images]
             if api.server_address.startswith("https://"):
-                semaphore = asyncio.Semaphore(100)
+                semaphore = asyncio.Semaphore(10)
             else:
                 semaphore = None
-            # api._get_default_semaphore()
 
             with Timer() as t:
                 coro = api.image.download_paths_async(image_ids, paths, semaphore)
