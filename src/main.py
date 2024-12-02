@@ -27,9 +27,9 @@ if sly.is_development():
 team_id = sly.env.team_id()
 workspace_id = sly.env.workspace_id()
 project_id = sly.env.project_id()
-export_images = True
-if os.environ["modal.state.selectedOutput"] == "annotations":
-    export_images = False
+
+output_mode = os.environ["modal.state.selectedOutput"]
+export_images = True if output_mode == "images" else False
 selected_filter = os.environ["modal.state.selectedFilter"]
 all_datasets = bool(strtobool(os.getenv("modal.state.allDatasets")))
 selected_datasets = ast.literal_eval(os.environ["modal.state.datasets"])
@@ -37,7 +37,7 @@ include_captions = bool(strtobool(os.getenv("modal.state.captions")))
 # endregion
 sly.logger.info(f"Team ID: {team_id}, Workspace ID: {workspace_id}, Project ID: {project_id}")
 sly.logger.info(
-    f"Selected output: {os.environ["modal.state.selectedOutput"]}, "
+    f"Selected output: {output_mode}, "
     f"Selected filter: {selected_filter}, "
     f"All datasets: {all_datasets}, "
     f"Selected datasets: {selected_datasets}, "
@@ -133,7 +133,7 @@ def export_to_coco(api: sly.Api) -> None:
                     ann_infos.extend(future.result())
                 else:
                     ann_infos.extend(loop.run_until_complete(coro))
-                    
+
             anns = []
             sly.logger.info(f"Preparing to convert {len(ann_infos)} annotations...")
             for ann_info, img_info in zip(ann_infos, batch):
