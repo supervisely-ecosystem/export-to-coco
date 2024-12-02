@@ -27,7 +27,9 @@ if sly.is_development():
 team_id = sly.env.team_id()
 workspace_id = sly.env.workspace_id()
 project_id = sly.env.project_id()
-selected_output = os.environ["modal.state.selectedOutput"]
+export_images = True
+if os.environ["modal.state.selectedOutput"] == "annotations":
+    export_images = False
 selected_filter = os.environ["modal.state.selectedFilter"]
 all_datasets = bool(strtobool(os.getenv("modal.state.allDatasets")))
 selected_datasets = ast.literal_eval(os.environ["modal.state.datasets"])
@@ -35,15 +37,20 @@ include_captions = bool(strtobool(os.getenv("modal.state.captions")))
 # endregion
 sly.logger.info(f"Team ID: {team_id}, Workspace ID: {workspace_id}, Project ID: {project_id}")
 sly.logger.info(
-    f"Selected output: {selected_output}, "
+    f"Selected output: {os.environ["modal.state.selectedOutput"]}, "
     f"Selected filter: {selected_filter}, "
     f"All datasets: {all_datasets}, "
     f"Selected datasets: {selected_datasets}, "
     f"Included captions: {include_captions}"
 )
 
-
 class Timer:
+
+    def __init__(self, message=None, items_cnt=None):
+        self.message = message
+        self.items_cnt = items_cnt
+        self.elapsed = 0
+
     def __enter__(self):
         self.start = time.perf_counter()
         return self
@@ -51,6 +58,12 @@ class Timer:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end = time.perf_counter()
         self.elapsed = self.end - self.start
+        msg = self.message or f"Block execution"
+        if self.items_cnt is not None:
+            log_msg = f"{msg} time: {self.elapsed:.3f} seconds per {self.items_cnt} items  ({self.elapsed/self.items_cnt:.3f} seconds per item)"
+        else:
+            log_msg = f"{msg} time: {self.elapsed:.3f} seconds"
+        sly.logger.info(log_msg)
 
 
 def export_to_coco(api: sly.Api) -> None:
@@ -93,32 +106,34 @@ def export_to_coco(api: sly.Api) -> None:
             min_report_percent=5,
         )
 
+        # to move
         dataset_path = os.path.join(coco_dataset_dir, project.name, dataset.name)
         os.makedirs(dataset_path, exist_ok=True)
 
-        if selected_output == "images":
-            image_ids = [image_info.id for image_info in images]
-            paths = [os.path.join(dataset_path, image_info.name) for image_info in images]
-            if api.server_address.startswith("https://"):
-                semaphore = asyncio.Semaphore(10)
-            else:
-                semaphore = None
+        for batch in sly.batched(images):
+            batch_ids = [info.id for info in batch]
+            batch_paths = [os.path.join(dataset_path, image_info.name) for image_info in batch]
 
-            with Timer() as t:
-                coro = api.image.download_paths_async(image_ids, paths, semaphore)
+            if export_images:
+                with Timer("Image downloading", len(batch_ids)):
+                    coro = api.image.download_paths_async(batch_ids, batch_paths)
+                    loop = sly.utils.get_or_create_event_loop()
+                    if loop.is_running():
+                        future = asyncio.run_coroutine_threadsafe(coro, loop)
+                        future.result()
+                    else:
+                        loop.run_until_complete(coro)
+
+            ann_infos = []
+            with Timer("Annotation downloading", len(batch_ids)):
+                coro = api.annotation.download_batch_async(dataset.id, batch_ids)
                 loop = sly.utils.get_or_create_event_loop()
                 if loop.is_running():
                     future = asyncio.run_coroutine_threadsafe(coro, loop)
-                    future.result()
+                    ann_infos.extend(future.result())
                 else:
-                    loop.run_until_complete(coro)
-            sly.logger.info(
-                f"Downloading time: {t.elapsed:.4f} seconds per {len(image_ids)} images  ({t.elapsed/len(image_ids):.4f} seconds per image)"
-            )
-
-        for batch in sly.batched(images):
-            batch_ids = [image_info.id for image_info in batch]
-            ann_infos = api.annotation.download_batch(dataset.id, batch_ids)
+                    ann_infos.extend(loop.run_until_complete(coro))
+                    
             anns = []
             sly.logger.info(f"Preparing to convert {len(ann_infos)} annotations...")
             for ann_info, img_info in zip(ann_infos, batch):
@@ -140,39 +155,6 @@ def export_to_coco(api: sly.Api) -> None:
                 RECTANGLE_MARK,
             )
 
-        # for batch in sly.batched(images):
-        #     image_ids = [image_info.id for image_info in batch]
-        #     sly.logger.info(f"Working with batch of {len(batch)} images with ids: {image_ids}")
-
-        #     if selected_output == "images":
-        #         image_paths = [os.path.join(img_dir, image_info.name) for image_info in batch]
-        #         with Timer() as t:
-        #             f.download_batch_with_retry(api, dataset.id, image_ids, image_paths)
-        #         sly.logger.info(
-        #             f"Downloading time: {t.elapsed:.4f} seconds per {len(image_ids)} images  ({t.elapsed/len(image_ids):.4f} seconds per image)"
-        #         )
-
-        #     ann_infos = api.annotation.download_batch(dataset.id, image_ids)
-        #     anns = []
-        #     sly.logger.info(f"Preparing to convert {len(ann_infos)} annotations...")
-        #     for ann_info, img_info in zip(ann_infos, batch):
-        #         ann = convert_geometry.convert_annotation(
-        #             ann_info, img_info, project_meta, meta, RECTANGLE_MARK
-        #         )
-        #         anns.append(ann)
-        #     sly.logger.info(f"{len(anns)} annotations converted...")
-        #     coco_instances, label_id, coco_captions, caption_id = f.create_coco_annotation(
-        #         categories_mapping,
-        #         batch,
-        #         anns,
-        #         label_id,
-        #         coco_instances,
-        #         caption_id,
-        #         coco_captions,
-        #         ds_progress,
-        #         include_captions,
-        #         RECTANGLE_MARK,
-        #     )
         with open(os.path.join(ann_dir, "instances.json"), "w") as file:
             json.dump(coco_instances, file)
         if coco_captions is not None and include_captions:
