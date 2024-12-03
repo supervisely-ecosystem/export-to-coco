@@ -5,6 +5,7 @@ from supervisely.sly_logger import logger
 from typing import List
 import uuid
 
+
 def prepare_meta(meta: sly.ProjectMeta):
     new_classes = []
     for cls in meta.obj_classes:
