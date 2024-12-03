@@ -7,8 +7,8 @@
     "export"
   ],
   "description": "Converts Supervisely to COCO format and prepares tar archive for download",
-  "docker_image": "supervisely/import-export:6.73.162",
-  "min_instance_version": "6.11.8",
+  "docker_image": "supervisely/import-export:6.73.242",
+  "min_instance_version": "6.12.5",
   "main_script": "src/main.py",
   "modal_template": "src/modal.html",
   "task_location": "workspace_tasks",
