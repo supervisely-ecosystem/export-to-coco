@@ -44,27 +44,6 @@ sly.logger.info(
     f"Included captions: {include_captions}"
 )
 
-class Timer:
-
-    def __init__(self, message=None, items_cnt=None):
-        self.message = message
-        self.items_cnt = items_cnt
-        self.elapsed = 0
-
-    def __enter__(self):
-        self.start = time.perf_counter()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.end = time.perf_counter()
-        self.elapsed = self.end - self.start
-        msg = self.message or f"Block execution"
-        if self.items_cnt is not None:
-            log_msg = f"{msg} time: {self.elapsed:.3f} seconds per {self.items_cnt} items  ({self.elapsed/self.items_cnt:.3f} seconds per item)"
-        else:
-            log_msg = f"{msg} time: {self.elapsed:.3f} seconds"
-        sly.logger.info(log_msg)
-
 
 def export_to_coco(api: sly.Api) -> None:
     project = api.project.get_info_by_id(project_id)
@@ -115,24 +94,23 @@ def export_to_coco(api: sly.Api) -> None:
             batch_paths = [os.path.join(dataset_path, image_info.name) for image_info in batch]
 
             if export_images:
-                with Timer("Image downloading", len(batch_ids)):
-                    coro = api.image.download_paths_async(batch_ids, batch_paths)
-                    loop = sly.utils.get_or_create_event_loop()
-                    if loop.is_running():
-                        future = asyncio.run_coroutine_threadsafe(coro, loop)
-                        future.result()
-                    else:
-                        loop.run_until_complete(coro)
-
-            ann_infos = []
-            with Timer("Annotation downloading", len(batch_ids)):
-                coro = api.annotation.download_batch_async(dataset.id, batch_ids)
+                coro = api.image.download_paths_async(batch_ids, batch_paths)
                 loop = sly.utils.get_or_create_event_loop()
                 if loop.is_running():
                     future = asyncio.run_coroutine_threadsafe(coro, loop)
-                    ann_infos.extend(future.result())
+                    future.result()
                 else:
-                    ann_infos.extend(loop.run_until_complete(coro))
+                    loop.run_until_complete(coro)
+
+            ann_infos = []
+
+            coro = api.annotation.download_batch_async(dataset.id, batch_ids)
+            loop = sly.utils.get_or_create_event_loop()
+            if loop.is_running():
+                future = asyncio.run_coroutine_threadsafe(coro, loop)
+                ann_infos.extend(future.result())
+            else:
+                ann_infos.extend(loop.run_until_complete(coro))
 
             anns = []
             sly.logger.info(f"Preparing to convert {len(ann_infos)} annotations...")
@@ -176,4 +154,8 @@ def export_to_coco(api: sly.Api) -> None:
 
 if __name__ == "__main__":
     api = sly.Api.from_env()
+    if api.server_address == "https://app.supervisely.com":
+        semaphore = api.get_default_semaphore()
+        if semaphore._value == 10:
+            api.set_semaphore_size(7)
     export_to_coco(api)
