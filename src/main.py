@@ -153,8 +153,4 @@ def export_to_coco(api: sly.Api) -> None:
 
 if __name__ == "__main__":
     api = sly.Api.from_env()
-    if api.server_address == "https://app.supervisely.com":
-        semaphore = api.get_default_semaphore()
-        if semaphore._value == 10:
-            api.set_semaphore_size(7)
     export_to_coco(api)
