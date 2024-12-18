@@ -2,6 +2,7 @@ import ast
 import json
 import os
 from distutils.util import strtobool
+import asyncio
 
 import supervisely as sly
 from dotenv import load_dotenv
@@ -25,7 +26,9 @@ if sly.is_development():
 team_id = sly.env.team_id()
 workspace_id = sly.env.workspace_id()
 project_id = sly.env.project_id()
-selected_output = os.environ["modal.state.selectedOutput"]
+
+output_mode = os.environ["modal.state.selectedOutput"]
+export_images = True if output_mode == "images" else False
 selected_filter = os.environ["modal.state.selectedFilter"]
 all_datasets = bool(strtobool(os.getenv("modal.state.allDatasets")))
 selected_datasets = ast.literal_eval(os.environ["modal.state.datasets"])
@@ -33,7 +36,7 @@ include_captions = bool(strtobool(os.getenv("modal.state.captions")))
 # endregion
 sly.logger.info(f"Team ID: {team_id}, Workspace ID: {workspace_id}, Project ID: {project_id}")
 sly.logger.info(
-    f"Selected output: {selected_output}, "
+    f"Selected output: {output_mode}, "
     f"Selected filter: {selected_filter}, "
     f"All datasets: {all_datasets}, "
     f"Selected datasets: {selected_datasets}, "
@@ -80,15 +83,34 @@ def export_to_coco(api: sly.Api) -> None:
             total_cnt=len(images),
             min_report_percent=5,
         )
+
+        # to move
+        dataset_path = os.path.join(coco_dataset_dir, project.name, dataset.name)
+        os.makedirs(dataset_path, exist_ok=True)
+
         for batch in sly.batched(images):
-            image_ids = [image_info.id for image_info in batch]
-            sly.logger.info(f"Working with batch of {len(batch)} images with ids: {image_ids}")
+            batch_ids = [info.id for info in batch]
+            batch_paths = [os.path.join(dataset_path, image_info.name) for image_info in batch]
 
-            if selected_output == "images":
-                image_paths = [os.path.join(img_dir, image_info.name) for image_info in batch]
-                f.download_batch_with_retry(api, dataset.id, image_ids, image_paths)
+            if export_images:
+                coro = api.image.download_paths_async(batch_ids, batch_paths)
+                loop = sly.utils.get_or_create_event_loop()
+                if loop.is_running():
+                    future = asyncio.run_coroutine_threadsafe(coro, loop)
+                    future.result()
+                else:
+                    loop.run_until_complete(coro)
 
-            ann_infos = api.annotation.download_batch(dataset.id, image_ids)
+            ann_infos = []
+
+            coro = api.annotation.download_batch_async(dataset.id, batch_ids)
+            loop = sly.utils.get_or_create_event_loop()
+            if loop.is_running():
+                future = asyncio.run_coroutine_threadsafe(coro, loop)
+                ann_infos.extend(future.result())
+            else:
+                ann_infos.extend(loop.run_until_complete(coro))
+
             anns = []
             sly.logger.info(f"Preparing to convert {len(ann_infos)} annotations...")
             for ann_info, img_info in zip(ann_infos, batch):
@@ -109,6 +131,7 @@ def export_to_coco(api: sly.Api) -> None:
                 include_captions,
                 RECTANGLE_MARK,
             )
+
         with open(os.path.join(ann_dir, "instances.json"), "w") as file:
             json.dump(coco_instances, file)
         if coco_captions is not None and include_captions:
