@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 import convert_geometry
 import functions as f
 import workflow as w
-import time
 
 # region constants
 USER_NAME = "Supervisely"
