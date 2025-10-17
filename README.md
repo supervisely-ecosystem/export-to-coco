@@ -10,7 +10,7 @@
   <a href="#Results">Results</a>
 </p>
 
-[![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](../../../../supervisely-ecosystem/export-to-coco)
+[![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](https://ecosystem.supervisely.com/apps/supervisely-ecosystem/export-to-coco)
 [![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervisely.com/slack)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/export-to-coco)
 [![views](https://app.supervisely.com/img/badges/views/supervisely-ecosystem/export-to-coco.png)](https://supervisely.com)
@@ -31,12 +31,12 @@ Application key points:
   👉 To exprot captions you need to create `caption` tag to the project (with `any_string` value type) and assign it to images with caption values.
 - ⚠️ Сonverts annotations without preserving holes.
   
-  👉 To preserve holes in polygons or export polylines it's best to use [Export to COCO mask](../../../../supervisely-ecosystem/export-to-coco-mask)
+  👉 To preserve holes in polygons or export polylines it's best to use [Export to COCO mask](https://ecosystem.supervisely.com/apps/export-to-coco-mask)
 - Backward compatible with [Import COCO](https://github.com/supervisely-ecosystem/import-coco)
 
 # How to Use
 
-1. Add [Export to COCO](../../../../supervisely-ecosystem/export-to-coco) to your team from Ecosystem
+1. Add [Export to COCO](https://ecosystem.supervisely.com/apps/export-to-coco) to your team from Ecosystem
 
    <img data-key="sly-module-link" data-module-slug="supervisely-ecosystem/export-to-coco" src="https://github.com/supervisely-ecosystem/export-to-coco/assets/57998637/81341c23-8803-4fc0-85e6-06802b833ec8" width="350px" style='padding-bottom: 20px'/>  
 
