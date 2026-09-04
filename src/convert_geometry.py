@@ -23,14 +23,20 @@ def prepare_meta(meta: sly.ProjectMeta):
     return meta
 
 
+# Geometries that a single label can expand into several polygons. Their parts must stay
+# grouped so the export emits one COCO annotation with a multi-polygon segmentation.
+MULTIPART_GEOMETRY_NAMES = (sly.Bitmap.name(), sly.Multipolygon.name())
+
+
 def convert_w_binding_key(
     label: sly.Label, new_obj_class: sly.ObjClass, binding_key: str
 ) -> List[sly.Label]:
     """
-    Convert geometries with a binding key (used only for bitmap labels for further grouping)
+    Convert geometries with a binding key (used for labels that expand into several polygons,
+    so that the parts of one object stay grouped)
     """
 
-    if binding_key is None and label.geometry.name() == sly.Bitmap.name():
+    if binding_key is None and label.geometry.name() in MULTIPART_GEOMETRY_NAMES:
         binding_key = uuid.uuid4().hex
 
     return [label.clone(binding_key=binding_key) for label in label.convert(new_obj_class)]
