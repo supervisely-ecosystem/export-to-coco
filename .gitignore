@@ -6,4 +6,6 @@ debug
 secret_debug.env
 __pycache__
 .DS_Store
-storage_dir/
+storage_dir/.venv*
+.pytest_cache
+.ruff_cache

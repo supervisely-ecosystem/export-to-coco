@@ -25,10 +25,10 @@ App converts [Supervisely format](https://docs.supervisely.com/data-organization
 Application key points:
 
 - Supports **instances.json** from **COCO** format
-- Сonverts **Supervisely** polygons, rectangles, bitmaps to **COCO** polygons and bboxes.
+- Сonverts **Supervisely** polygons, rectangles, bitmaps to **COCO** polygons and bboxes, and keypoint graphs to **COCO** keypoints.
 - Allow to export **captions** in COCO format
 
-  👉 To exprot captions you need to create `caption` tag to the project (with `any_string` value type) and assign it to images with caption values.
+  👉 To export captions you need to create `caption` tag to the project (with `any_string` value type) and assign it to images with caption values.
 - ⚠️ Сonverts annotations without preserving holes.
   
   👉 To preserve holes in polygons or export polylines it's best to use [Export to COCO mask](https://ecosystem.supervisely.com/apps/export-to-coco-mask)
@@ -64,3 +64,29 @@ You can also find your converted project in
 `Team Files` -> `tmp` -> `supervisely` -> `export` -> `export-to-COCO` -> `<taskId>_<projectName>.tar`
 
 <img src="https://github.com/supervisely-ecosystem/export-to-coco/assets/57998637/5f4353b3-bbb4-4d48-87df-77dceaea6d96"/>
+
+## Archive structure
+
+```
+<project name>/
+  <dataset id>_<dataset name>/      # one folder per dataset, nested datasets included
+    images/                         # only when "images and annotations" is selected
+    annotations/instances.json
+    annotations/captions.json       # only when captions are exported
+```
+
+Each `instances.json` is a separate COCO dataset: image and annotation ids start at 1, and every
+image keeps its Supervisely id in `sly_id`.
+
+# For developers
+
+```bash
+uv venv --python 3.14 && uv pip install -r dev_requirements.txt pytest ruff
+.venv/bin/pytest                      # unit tests, offline
+.venv/bin/ruff check src tests
+```
+
+Run locally against your instance: put `SERVER_ADDRESS` and `API_TOKEN` in `~/supervisely.env`,
+set `TEAM_ID`, `WORKSPACE_ID`, `PROJECT_ID` and the `modal.state.*` options in `local.env`
+(more option sets in `cases/`), then `python src/main.py`. Contract tests against a real
+instance: see `tests/contract/test_export.py`.
