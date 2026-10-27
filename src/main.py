@@ -1,156 +1,30 @@
-import ast
-import json
+"""Export to COCO: headless task started from an images project's "Download as" menu."""
+
 import os
-from distutils.util import strtobool
-import asyncio
 
 import supervisely as sly
 from dotenv import load_dotenv
 
-import convert_geometry
-import functions as f
-import workflow as w
-
-# region constants
-USER_NAME = "Supervisely"
-RECTANGLE_MARK = "converted_from_rectangle"
-STORAGE_DIR = os.path.join(os.getcwd(), "storage_dir")
-# endregion
-sly.fs.mkdir(STORAGE_DIR, remove_content_if_exists=True)
-
-if sly.is_development():
-    load_dotenv("local.env")
-    load_dotenv(os.path.expanduser("~/supervisely.env"))
-
-# region envvars
-team_id = sly.env.team_id()
-workspace_id = sly.env.workspace_id()
-project_id = sly.env.project_id()
-
-output_mode = os.environ["modal.state.selectedOutput"]
-export_images = True if output_mode == "images" else False
-selected_filter = os.environ["modal.state.selectedFilter"]
-all_datasets = bool(strtobool(os.getenv("modal.state.allDatasets")))
-selected_datasets = ast.literal_eval(os.environ["modal.state.datasets"])
-include_captions = bool(strtobool(os.getenv("modal.state.captions")))
-# endregion
-sly.logger.info(f"Team ID: {team_id}, Workspace ID: {workspace_id}, Project ID: {project_id}")
-sly.logger.info(
-    f"Selected output: {output_mode}, "
-    f"Selected filter: {selected_filter}, "
-    f"All datasets: {all_datasets}, "
-    f"Selected datasets: {selected_datasets}, "
-    f"Included captions: {include_captions}"
-)
+import platform_io
+from exporter import export_project
+from settings import Settings
 
 
-def export_to_coco(api: sly.Api) -> None:
-    project = api.project.get_info_by_id(project_id)
-    project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
-    sly.logger.debug("Project meta retrieved...")
+def main() -> None:
+    if not sly.is_production():
+        load_dotenv("local.env")
+        load_dotenv(os.path.expanduser("~/supervisely.env"))
 
-    w.workflow_input(api, project.id)
+    settings = Settings.from_env()
+    project_id = sly.env.project_id()
+    sly.logger.info(f"Export settings: {settings}")
+    api = sly.Api.from_env()
 
-    coco_base_dir = os.path.join(STORAGE_DIR, project.name)
-    sly.logger.debug(f"Data in COCO format will be saved to {coco_base_dir}.")
-
-    meta = convert_geometry.prepare_meta(project_meta)
-    categories_mapping = f.get_categories_map_from_meta(meta)
-
-    datasets = api.dataset.get_list(project_id, recursive=True)
-    if not all_datasets:
-        datasets = [dataset for dataset in datasets if dataset.id in selected_datasets]
-
-    sly.logger.debug(f"Will be working with {len(datasets)} datasets.")
-    label_id = 0
-    caption_id = 0
-
-    for dataset in datasets:
-        sly.logger.info(f"Processing dataset {dataset.name}...")
-        coco_dataset_dir = os.path.join(coco_base_dir, f"{dataset.id}_{dataset.name}")
-        img_dir, ann_dir = f.create_coco_dataset(coco_dataset_dir)
-
-        coco_instances, coco_captions = f.create_coco_ann_templates(
-            dataset, USER_NAME, meta, include_captions
-        )
-        images = api.image.get_list(dataset.id)
-
-        if selected_filter == "annotated":
-            images = [image for image in images if image.labels_count > 0 or len(image.tags) > 0]
-
-        ds_progress = sly.Progress(
-            f"Converting dataset: {dataset.name}",
-            total_cnt=len(images),
-            min_report_percent=5,
-        )
-
-        # to move
-        dataset_path = os.path.join(coco_dataset_dir, project.name, dataset.name)
-        os.makedirs(dataset_path, exist_ok=True)
-
-        for batch in sly.batched(images):
-            batch_ids = [info.id for info in batch]
-            batch_paths = [os.path.join(dataset_path, image_info.name) for image_info in batch]
-
-            if export_images:
-                coro = api.image.download_paths_async(batch_ids, batch_paths)
-                loop = sly.utils.get_or_create_event_loop()
-                if loop.is_running():
-                    future = asyncio.run_coroutine_threadsafe(coro, loop)
-                    future.result()
-                else:
-                    loop.run_until_complete(coro)
-
-            ann_infos = []
-
-            coro = api.annotation.download_batch_async(dataset.id, batch_ids)
-            loop = sly.utils.get_or_create_event_loop()
-            if loop.is_running():
-                future = asyncio.run_coroutine_threadsafe(coro, loop)
-                ann_infos.extend(future.result())
-            else:
-                ann_infos.extend(loop.run_until_complete(coro))
-
-            anns = []
-            sly.logger.info(f"Preparing to convert {len(ann_infos)} annotations...")
-            for ann_info, img_info in zip(ann_infos, batch):
-                ann = convert_geometry.convert_annotation(
-                    ann_info, img_info, project_meta, meta, RECTANGLE_MARK
-                )
-                anns.append(ann)
-            sly.logger.info(f"{len(anns)} annotations converted...")
-            coco_instances, label_id, coco_captions, caption_id = f.create_coco_annotation(
-                categories_mapping,
-                batch,
-                anns,
-                label_id,
-                coco_instances,
-                caption_id,
-                coco_captions,
-                ds_progress,
-                include_captions,
-                RECTANGLE_MARK,
-            )
-
-        with open(os.path.join(ann_dir, "instances.json"), "w") as file:
-            json.dump(coco_instances, file)
-        if coco_captions is not None and include_captions:
-            with open(os.path.join(ann_dir, "captions.json"), "w") as file:
-                json.dump(coco_captions, file)
-        sly.logger.info(f"Dataset [{dataset.name}] processed!")
-
-    total_files = len(sly.fs.list_files_recursively(STORAGE_DIR))
-    dir_size = sly.fs.get_directory_size(STORAGE_DIR) / (1024 * 1024)
-    dir_size = f"{dir_size:.2f} MB"
-
-    sly.logger.info(f"Total files: {total_files}")
-    sly.logger.info(f"Total images: {total_files - len(datasets)}")
-    sly.logger.info(f"Total directory size: {dir_size}")
-
-    file_info = sly.output.set_download(coco_base_dir)
-    w.workflow_output(api, file_info)
+    platform_io.register_workflow_input(api, project_id)
+    project_dir = export_project(api, project_id, settings, sly.app.get_data_dir())
+    archive = sly.output.set_download(project_dir)  # archives the folder, uploads it, sets the task's download link
+    platform_io.register_workflow_output(api, archive)
 
 
 if __name__ == "__main__":
-    api = sly.Api.from_env()
-    export_to_coco(api)
+    sly.main_wrapper("main", main)
