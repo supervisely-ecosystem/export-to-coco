@@ -1,7 +1,7 @@
 # Modernization notes: export-to-coco
 
 Rewrite of `export-to-coco` to the `sly-app-standard` (local pilot, not released).
-Base: `origin/master` @ 9167823. Branch `local/modernize`, nothing committed.
+Base: `origin/master` @ 9167823. Branch `ecosystem-fixes-2026-10`, local commits only (not pushed).
 
 ## Behaviour contract (kept)
 
@@ -46,6 +46,9 @@ uploaded to Team Files under the export path for this task). Archive layout:
 `any_string` not limited to objects. Same `info`/`licenses`/`images`; `annotations[]` =
 `{image_id, id, caption}` per caption tag on an image.
 
+Both JSON files are written compactly, exactly as `json.dump(data, file)` does (no indentation,
+separators `", "` / `": "`), like published v2.2.6. Indented output is 2–3.4× larger.
+
 **Platform side effects.** Workflow lineage: the project as input, the archive as output.
 Nothing in the project is modified.
 
@@ -62,7 +65,9 @@ Nothing in the project is modified.
    keypoint annotations and their categories carry `keypoints`/`skeleton` (SDK `sly_ann_to_coco`).
 4. **bbox numbers are ints** (`[10, 20, 9, 19]` instead of `[10.0, 20.0, 9.0, 19.0]`). Same values.
 5. **`images/` is created only when images are exported.**
-6. **Runs on the hardened image (Python 3.14).** The old code used `distutils.util.strtobool`,
+6. **Missing caption tag is reported.** With captions on and no valid `caption` tag in the project,
+   the task log gets one warning per export; the old app silently wrote no `captions.json`.
+7. **Runs on the hardened image (Python 3.14).** The old code used `distutils.util.strtobool`,
    removed in Python 3.12, so it could not run there.
 
 ## Dropped

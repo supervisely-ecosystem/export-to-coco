@@ -3,6 +3,7 @@
 import json
 import os
 from types import SimpleNamespace
+from unittest import mock
 
 import supervisely as sly
 
@@ -11,6 +12,8 @@ from settings import Settings
 
 CLS = sly.ObjClass("box", sly.Rectangle)
 META = sly.ProjectMeta(obj_classes=[CLS])
+CAPTION = sly.TagMeta("caption", sly.TagValueType.ANY_STRING)
+META_WITH_CAPTIONS = META.add_tag_meta(CAPTION)
 
 
 def info(cls, **values):
@@ -33,19 +36,20 @@ def image(image_id, name, labels_count):
 class FakeApi:
     """Only the calls export_project makes. Datasets 1 (root) and 2 (nested) of project 10."""
 
-    def __init__(self):
+    def __init__(self, meta=META):
         self.datasets = [
             info(sly.DatasetInfo, id=1, name="train", description="", created_at="2024-01-01T00:00:00.000Z"),
             info(sly.DatasetInfo, id=2, name="val", description="", created_at="2024-01-01T00:00:00.000Z"),
         ]
         self.images = {1: [image(11, "a.jpg", 1), image(12, "b.jpg", 0)], 2: [image(21, "c.jpg", 1)]}
-        box = sly.Annotation((6, 8), labels=[sly.Label(sly.Rectangle(1, 1, 3, 4), CLS)]).to_json()
+        img_tags = [sly.Tag(CAPTION, "a lemon")] if meta.get_tag_meta("caption") else []
+        box = sly.Annotation((6, 8), labels=[sly.Label(sly.Rectangle(1, 1, 3, 4), CLS)], img_tags=img_tags).to_json()
         empty = sly.Annotation((6, 8)).to_json()
         self.anns = {11: box, 12: empty, 21: box}
 
         self.project = SimpleNamespace(
             get_info_by_id=lambda pid: SimpleNamespace(id=pid, name="lemons"),
-            get_meta=lambda pid: META.to_json(),
+            get_meta=lambda pid: meta.to_json(),
         )
         self.dataset = SimpleNamespace(get_list=lambda pid, recursive: self.datasets)
         self.image = SimpleNamespace(get_list=lambda ds_id: self.images[ds_id], download_paths_async=self._download)
@@ -96,3 +100,29 @@ def test_unknown_dataset_id_fails(tmp_path):
         assert "99" in str(e)
     else:
         raise AssertionError("expected ValueError")
+
+
+def test_json_files_are_compact_like_the_published_app(tmp_path):
+    """v2.2.6 wrote `json.dump(data, file)`: no indentation, default separators. Indenting made files 2-3x larger."""
+    settings = Settings(export_images=False, only_annotated=False, dataset_ids=(1,), with_captions=True)
+    root = export_project(FakeApi(META_WITH_CAPTIONS), 10, settings, str(tmp_path))
+
+    annotations_dir = os.path.join(root, "1_train", "annotations")
+    assert sorted(os.listdir(annotations_dir)) == ["captions.json", "instances.json"]
+    for name in ("instances.json", "captions.json"):
+        with open(os.path.join(annotations_dir, name)) as f:
+            text = f.read()
+        assert text == json.dumps(json.loads(text)), name
+    captions = load(os.path.join(annotations_dir, "captions.json"))
+    assert captions["annotations"] == [{"image_id": 1, "id": 1, "caption": "a lemon"}]
+
+
+def test_missing_caption_tag_is_reported_once_per_export(tmp_path):
+    settings = Settings(export_images=False, only_annotated=False, dataset_ids=None, with_captions=True)
+    with mock.patch.object(sly.logger, "warning") as warning:
+        root = export_project(FakeApi(), 10, settings, str(tmp_path))
+
+    caption_warnings = [c for c in warning.call_args_list if "Captions requested" in str(c.args[0])]
+    assert len(caption_warnings) == 1
+    for ds in ("1_train", "2_val"):
+        assert os.listdir(os.path.join(root, ds, "annotations")) == ["instances.json"]

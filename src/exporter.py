@@ -7,7 +7,7 @@ import os
 import supervisely as sly
 
 import platform_io
-from core.coco import CocoDatasetBuilder, skipped_summary
+from core.coco import CocoDatasetBuilder, has_captions, skipped_summary
 from settings import Settings
 
 BATCH_SIZE = 100
@@ -26,6 +26,9 @@ def export_project(api: sly.Api, project_id: int, settings: Settings, work_dir: 
 
     datasets = platform_io.list_datasets(api, project_id, settings.dataset_ids)
     sly.logger.info(f"Exporting {len(datasets)} dataset(s) of project {project.name!r} to COCO")
+    if settings.with_captions and not has_captions(meta):
+        # a project-level fact: say it once, not once per dataset
+        sly.logger.warning("Captions requested, but the project has no image tag 'caption' of type any_string")
     for dataset in datasets:
         export_dataset(api, dataset, meta, settings, os.path.join(project_dir, f"{dataset.id}_{dataset.name}"))
     return project_dir
@@ -54,8 +57,11 @@ def export_dataset(
             f"Dataset {dataset.name!r}: shapes COCO cannot express were skipped: "
             + ", ".join(skipped_summary(builder.skipped))
         )
-    sly.json.dump_json_file(builder.instances, os.path.join(annotations_dir, "instances.json"))
+    _write_json(builder.instances, os.path.join(annotations_dir, "instances.json"))
     if builder.captions is not None:
-        sly.json.dump_json_file(builder.captions, os.path.join(annotations_dir, "captions.json"))
-    elif settings.with_captions:
-        sly.logger.warning("Captions requested, but the project has no image tag 'caption' of type any_string")
+        _write_json(builder.captions, os.path.join(annotations_dir, "captions.json"))
+
+
+def _write_json(data: dict, path: str) -> None:
+    """Compact, as the app has always written COCO files (`json.dump` defaults, no indentation)."""
+    sly.json.dump_json_file(data, path, indent=None)
